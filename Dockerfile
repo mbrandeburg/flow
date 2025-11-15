@@ -1,18 +1,19 @@
 # https://github.com/vercel/turborepo/blob/a2a04ed4eba28602c7cdb36377c75a2f7007e90d/examples/with-docker/apps/web/Dockerfile
 
-FROM node:16-alpine AS builder
+FROM node:18-alpine AS builder
 # Check https://github.com/nodejs/docker-node/tree/b4117f9333da4138b03a546ec926ef50a31506c3#nodealpine to understand why libc6-compat might be needed.
 RUN apk add --no-cache libc6-compat
 RUN apk update
 # Set working directory
 WORKDIR /app
-RUN yarn global add turbo
+RUN corepack enable
+RUN corepack prepare pnpm@latest --activate
 COPY . .
 # Only Take packages that are needed to compile this app
-RUN turbo prune --scope=@flow/reader --docker
+RUN pnpm dlx turbo prune --scope=@flow/reader --docker
 
 # Add lockfile and package.json's of isolated subworkspace
-FROM node:alpine AS installer
+FROM node:18-alpine AS installer
 RUN apk add --no-cache libc6-compat
 RUN apk update
 WORKDIR /app
@@ -31,7 +32,7 @@ COPY tsconfig.*json .
 
 RUN DOCKER=1 pnpm -F reader build
 
-FROM node:alpine AS runner
+FROM node:18-alpine AS runner
 WORKDIR /app
 
 # Don't run production as root
@@ -46,5 +47,11 @@ COPY --from=installer /app/apps/reader/package.json .
 # https://nextjs.org/docs/advanced-features/output-file-tracing
 COPY --from=installer --chown=nextjs:nodejs /app/apps/reader/.next/standalone ./
 COPY --from=installer --chown=nextjs:nodejs /app/apps/reader/.next/static ./apps/reader/.next/static
+COPY --from=installer --chown=nextjs:nodejs /app/apps/reader/public ./apps/reader/public
+
+EXPOSE 3000
+
+ENV PORT 3000
+ENV NODE_ENV production
 
 CMD node apps/reader/server.js

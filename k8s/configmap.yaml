@@ -1,0 +1,14 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: flow-reader-config
+  namespace: default
+data:
+  # Application URL
+  NEXT_PUBLIC_APP_URL: "https://ebooks.matthewbrandeburg.com"
+  
+  # Website URL for cross-linking (optional - can point to original or your own site)
+  NEXT_PUBLIC_WEBSITE_URL: "https://flowoss.com"
+  
+  # Node environment
+  NODE_ENV: "production"

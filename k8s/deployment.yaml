@@ -1,0 +1,65 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: flow-reader
+  namespace: default
+  labels:
+    app: flow-reader
+spec:
+  replicas: 1  # Single replica for Raspberry Pi
+  selector:
+    matchLabels:
+      app: flow-reader
+  template:
+    metadata:
+      labels:
+        app: flow-reader
+    spec:
+      containers:
+      - name: flow-reader
+        image: ghcr.io/mbrandeburg/flow:latest
+        imagePullPolicy: Always
+        ports:
+        - containerPort: 3000
+          protocol: TCP
+        env:
+        - name: PORT
+          value: "3000"
+        envFrom:
+        - configMapRef:
+            name: flow-reader-config
+        - secretRef:
+            name: flow-reader-secrets
+        resources:
+          requests:
+            memory: "256Mi"
+            cpu: "100m"
+          limits:
+            memory: "512Mi"
+            cpu: "500m"
+        livenessProbe:
+          httpGet:
+            path: /
+            port: 3000
+          initialDelaySeconds: 30
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 3
+        readinessProbe:
+          httpGet:
+            path: /
+            port: 3000
+          initialDelaySeconds: 10
+          periodSeconds: 5
+          timeoutSeconds: 3
+          failureThreshold: 3
+        volumeMounts:
+        - name: data
+          mountPath: /app/data
+      volumes:
+      - name: data
+        persistentVolumeClaim:
+          claimName: flow-reader-data
+      # Uncomment if using private registry
+      # imagePullSecrets:
+      # - name: ghcr-secret
