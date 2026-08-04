@@ -130,7 +130,7 @@ export const TypographyView: React.FC<PaneViewProps> = (props) => {
           // Preload fonts to ensure `localFonts` is available on first mouse click.
           // Without preloading, datalist dropdown will be empty for the first mouse click.
           onMouseEnter={queryLocalFonts}
-          onChange={(e) => {
+          onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
             setTypography('fontFamily', e.target.value)
           }}
         />
@@ -186,6 +186,7 @@ const NumberField: React.FC<NumberFieldProps> = ({ onChange, ...props }) => {
   return (
     <TextField
       as="input"
+      name={props.name}
       type="number"
       placeholder="default"
       actions={[
@@ -210,7 +211,7 @@ const NumberField: React.FC<NumberFieldProps> = ({ onChange, ...props }) => {
       ]}
       mRef={ref}
       // lazy render
-      onBlur={(e) => {
+      onBlur={(e: React.FocusEvent<HTMLInputElement>) => {
         onChange(Number(e.target.value))
       }}
       onClear={() => {
