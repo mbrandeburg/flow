@@ -22,12 +22,9 @@ const config = {
     locales: ['en-US', 'zh-CN', 'ja-JP', 'de-DE'],
     defaultLocale: 'en-US',
   },
-  // TODO(framework-migration): these gates are temporarily relaxed while the
-  // Next 16 core build is validated. Re-enable both, migrate ESLint to flat
-  // config, and fix the @types/react 19 type errors, then remove.
-  eslint: {
-    ignoreDuringBuilds: true,
-  },
+  // TODO(framework-migration): temporarily skip type-checking during the Next 16
+  // core-build validation. Re-enable (remove this) and fix the @types/react 19
+  // type errors next. ESLint is fully decoupled from `next build` in Next 16.
   typescript: {
     ignoreBuildErrors: true,
   },
