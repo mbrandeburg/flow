@@ -111,11 +111,11 @@ importers:
         specifier: 1.11.21
         version: 1.11.21
       dexie:
-        specifier: 3.2.2
-        version: 3.2.2
+        specifier: 4.4.4
+        version: 4.4.4
       dexie-react-hooks:
-        specifier: 1.1.1
-        version: 1.1.1(@types/react@17.0.43)(dexie@3.2.2)(react@18.0.0)
+        specifier: 4.4.0
+        version: 4.4.0(dexie@4.4.4)(react@18.0.0)
       dropbox:
         specifier: 10.42.0
         version: 10.42.0
@@ -165,14 +165,14 @@ importers:
         specifier: 0.7.7
         version: 0.7.7(react-dom@18.0.0(react@18.0.0))(react@18.0.0)
       swr:
-        specifier: 1.3.0
-        version: 1.3.0(react@18.0.0)
+        specifier: 2.5.0
+        version: 2.5.0(react@18.0.0)
       tilg:
         specifier: 0.1.1
         version: 0.1.1(react@18.0.0)
       use-local-storage-state:
-        specifier: 18.1.1
-        version: 18.1.1(react-dom@18.0.0(react@18.0.0))(react@18.0.0)
+        specifier: 20.0.0
+        version: 20.0.0(react-dom@18.0.0(react@18.0.0))(react@18.0.0)
       uuid:
         specifier: 14.0.1
         version: 14.0.1
@@ -217,8 +217,8 @@ importers:
         specifier: 3.2.0
         version: 3.2.0(postcss@8.5.25)
       type-fest:
-        specifier: 2.12.2
-        version: 2.12.2
+        specifier: 5.8.0
+        version: 5.8.0
 
   apps/website:
     dependencies:
@@ -311,8 +311,8 @@ importers:
         specifier: 3.2.0
         version: 3.2.0(postcss@8.5.25)
       type-fest:
-        specifier: 2.12.2
-        version: 2.12.2
+        specifier: 5.8.0
+        version: 5.8.0
 
   packages/epubjs:
     dependencies:
@@ -3190,16 +3190,14 @@ packages:
   devlop@1.1.0:
     resolution: {integrity: sha512-RWmIqhcFf1lRYBvNmr7qTNuyCt/7/ns2jbpp1+PalgE/rDQcBT0fioSMUpJ93irlUhC5hrg4cYqe6U+0ImW0rA==}
 
-  dexie-react-hooks@1.1.1:
-    resolution: {integrity: sha512-Cam5JP6PxHN564RvWEoe8cqLhosW0O4CAZ9XEVYeGHJBa6KEJlOpd9CUpV3kmU9dm2MrW97/lk7qkf1xpij7gA==}
+  dexie-react-hooks@4.4.0:
+    resolution: {integrity: sha512-ObLXBS5+4BJU8vtSvBx6b9fY6zZYgniAtwxzjCHsUQadgbqYN6935X2/1TWw4Rf2N1aZV1io5/ziox4vKuxABA==}
     peerDependencies:
-      '@types/react': '>=16'
-      dexie: '>=3.1.0-alpha.1 <5.0.0'
+      dexie: '>=4.2.0-alpha.1 <5.0.0'
       react: '>=16'
 
-  dexie@3.2.2:
-    resolution: {integrity: sha512-q5dC3HPmir2DERlX+toCBbHQXW5MsyrFqPFcovkH9N2S/UW/H3H5AWAB6iEOExeraAu+j+zRDG+zg/D7YhH0qg==}
-    engines: {node: '>=6.0'}
+  dexie@4.4.4:
+    resolution: {integrity: sha512-jIwsYI8Os2hgnqc6O49YwFDKGc5v5QjGx0wPVp543ip1F53VFAKMLthV2pQosQcVTv3eAskTWYspOx195PM0FQ==}
 
   di@0.0.1:
     resolution: {integrity: sha512-uJaamHkagcZtHPqCIHZxnFrXlunQXgBOsZSUOWwFw31QJCAbyTBoHMW75YOTur5ZNx8pIeAKgf6GWIgaqqiLhA==}
@@ -7556,13 +7554,17 @@ packages:
     resolution: {integrity: sha512-ot0WnXS9fgdkgIcePe6RHNk1WA8+muPa6cSjeR3V8K27q9BB1rTE3R1p7Hv0z1ZyAc8s6Vvv8DIyWf681MAt0w==}
     engines: {node: '>= 0.4'}
 
-  swr@1.3.0:
-    resolution: {integrity: sha512-dkghQrOl2ORX9HYrMDtPa7LTVHJjCTeZoB1dqTbnnEDlSvN8JEKpYIYurDfvbQFUUS8Cg8PceFVZNkW0KNNYPw==}
+  swr@2.5.0:
+    resolution: {integrity: sha512-W0GomadRJe9OfzIoRX0kZHhDSaRRfdiOUeH6uazgR05SibBhDNwfdTbhAxmFtObvkf59fFymo22mooKukosvNA==}
     peerDependencies:
-      react: ^16.11.0 || ^17.0.0 || ^18.0.0
+      react: ^16.11.0 || ^17.0.0 || ^18.0.0 || ^19.0.0
 
   taffydb@2.6.2:
     resolution: {integrity: sha512-y3JaeRSplks6NYQuCOj3ZFMO3j60rTwbuKCvZxsAraGYH2epusatvZ0baZYA01WsGqJBq/Dl6vOrMUJqyMj8kA==}
+
+  tagged-tag@1.0.0:
+    resolution: {integrity: sha512-yEFYrVhod+hdNyx7g5Bnkkb0G6si8HJurOoOEgC8B/O0uXLHlaey/65KRv6cuWBNhBgHKAROVpc7QyYqE5gFng==}
+    engines: {node: '>=20'}
 
   tailwindcss@3.2.0:
     resolution: {integrity: sha512-ARh/W0uH5UlWIC2nn02V0+5fyF0k6qZliyt4QYic2upOhPUE/Spu1EURNc9txJ3+4j8OEmdigqfDpw4d2tA4vA==}
@@ -7863,13 +7865,13 @@ packages:
     resolution: {integrity: sha512-4dbzIzqvjtgiM5rw1k5rEHtBANKmdudhGyBEajN01fEyhaAIhsoKNy6y7+IN93IfpFtwY9iqi7kD+xwKhQsNJA==}
     engines: {node: '>=8'}
 
-  type-fest@2.12.2:
-    resolution: {integrity: sha512-qt6ylCGpLjZ7AaODxbpyBZSs9fCI9SkL3Z9q2oxMBQhs/uyY+VD8jHA8ULCGmWQJlBgqvO3EJeAngOHD8zQCrQ==}
-    engines: {node: '>=12.20'}
-
   type-fest@2.19.0:
     resolution: {integrity: sha512-RAH822pAdBgcNMAfWnCBU3CFZcfZ/i1eZjwFU/dsLKumyuuP3niueg2UAukXYF0E2AAoc82ZSSf9J0WQBinzHA==}
     engines: {node: '>=12.20'}
+
+  type-fest@5.8.0:
+    resolution: {integrity: sha512-YGYEVz3Fm5iy/AybuA0oyNFq7H4CgQNfRp/qfe8nurE1kuCeNm3/vfm9X4Mtl+qLyaKJUh5xrFZwogr41SMjYA==}
+    engines: {node: '>=20'}
 
   type-is@1.6.18:
     resolution: {integrity: sha512-TkRKr9sUTxEH8MdfuCSP7VizJyzRNMjj2J2do2Jr3Kym598JVdEksuzPQCnlFPW4ky9Q+iA+ma9BGm06XQBy8g==}
@@ -8094,6 +8096,13 @@ packages:
       react: '>=18'
       react-dom: '>=18'
 
+  use-local-storage-state@20.0.0:
+    resolution: {integrity: sha512-PSaIAivHEv1+XtOr7FwyCYRx5fVf+3uW0d2rr/pbc7zWarHu7U4JQZs5KPaHxAaUVTwPYVJyL0ysdChVV0GR2Q==}
+    engines: {node: '>=14'}
+    peerDependencies:
+      react: '>=18'
+      react-dom: '>=18'
+
   use-sidecar@1.1.3:
     resolution: {integrity: sha512-Fedw0aZvkhynoPYlA5WXrMCAMm+nSWdZt6lzJQ7Ok8S6Q+VsHmHpRWndVRJ8Be0ZbkfPc5LRYH+5XrzXcEeLRQ==}
     engines: {node: '>=10'}
@@ -8113,6 +8122,11 @@ packages:
     resolution: {integrity: sha512-eEgnFxGQ1Ife9bzYs6VLi8/4X6CObHMw9Qr9tPY43iKwsPw8xE8+EFsf/2cFZ5S3esXgpWgtSCtLNS41F+sKPA==}
     peerDependencies:
       react: ^16.8.0 || ^17.0.0 || ^18.0.0
+
+  use-sync-external-store@1.6.0:
+    resolution: {integrity: sha512-Pp6GSwGP/NrPIrxVFAIkOQeyw8lFenOHijQWkUTrDvrF4ALqylP2C/KCkeS9dpUM3KvYRQhna5vt7IL95+ZQ9w==}
+    peerDependencies:
+      react: ^16.8.0 || ^17.0.0 || ^18.0.0 || ^19.0.0
 
   use@3.1.1:
     resolution: {integrity: sha512-cwESVXlO3url9YWlFW/TA9cshCEhtu7IKJ/p5soJ/gGpj7vbvFrAY/eIioQ6Dw23KjZhYgiIo8HOs1nQ2vr/oQ==}
@@ -11773,13 +11787,12 @@ snapshots:
     dependencies:
       dequal: 2.0.3
 
-  dexie-react-hooks@1.1.1(@types/react@17.0.43)(dexie@3.2.2)(react@18.0.0):
+  dexie-react-hooks@4.4.0(dexie@4.4.4)(react@18.0.0):
     dependencies:
-      '@types/react': 17.0.43
-      dexie: 3.2.2
+      dexie: 4.4.4
       react: 18.0.0
 
-  dexie@3.2.2: {}
+  dexie@4.4.4: {}
 
   di@0.0.1: {}
 
@@ -17235,11 +17248,15 @@ snapshots:
 
   supports-preserve-symlinks-flag@1.0.0: {}
 
-  swr@1.3.0(react@18.0.0):
+  swr@2.5.0(react@18.0.0):
     dependencies:
+      dequal: 2.0.3
       react: 18.0.0
+      use-sync-external-store: 1.6.0(react@18.0.0)
 
   taffydb@2.6.2: {}
+
+  tagged-tag@1.0.0: {}
 
   tailwindcss@3.2.0(postcss@8.5.25):
     dependencies:
@@ -17565,9 +17582,11 @@ snapshots:
 
   type-fest@0.8.1: {}
 
-  type-fest@2.12.2: {}
-
   type-fest@2.19.0: {}
+
+  type-fest@5.8.0:
+    dependencies:
+      tagged-tag: 1.0.0
 
   type-is@1.6.18:
     dependencies:
@@ -17829,6 +17848,11 @@ snapshots:
       react: 18.0.0
       react-dom: 18.0.0(react@18.0.0)
 
+  use-local-storage-state@20.0.0(react-dom@18.0.0(react@18.0.0))(react@18.0.0):
+    dependencies:
+      react: 18.0.0
+      react-dom: 18.0.0(react@18.0.0)
+
   use-sidecar@1.1.3(@types/react@17.0.43)(react@18.0.0):
     dependencies:
       detect-node-es: 1.1.0
@@ -17842,6 +17866,10 @@ snapshots:
       react: 18.0.0
 
   use-sync-external-store@1.2.0(react@18.0.0):
+    dependencies:
+      react: 18.0.0
+
+  use-sync-external-store@1.6.0(react@18.0.0):
     dependencies:
       react: 18.0.0
 
