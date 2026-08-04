@@ -10,7 +10,6 @@ import React, {
 import { MdChevronRight, MdWebAsset } from 'react-icons/md'
 import { RiBookLine } from 'react-icons/ri'
 import { PhotoSlider } from 'react-photo-view'
-import useTilg from 'tilg'
 import { useSnapshot } from 'valtio'
 
 import { RenditionSpread } from '@flow/epubjs/types/rendition'
@@ -212,8 +211,6 @@ function BookPane({ tab, onMouseDown }: BookPaneProps) {
   const [background] = useBackground()
 
   const { iframe, rendition, rendered, container } = useSnapshot(tab)
-
-  useTilg()
 
   useEffect(() => {
     const el = ref.current

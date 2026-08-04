@@ -164,9 +164,6 @@ importers:
       swr:
         specifier: 2.5.0
         version: 2.5.0(react@19.2.8)
-      tilg:
-        specifier: 0.1.1
-        version: 0.1.1(react@19.2.8)
       use-local-storage-state:
         specifier: 20.0.0
         version: 20.0.0(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
@@ -7898,11 +7895,6 @@ packages:
 
   thunky@1.1.0:
     resolution: {integrity: sha512-eHY7nBftgThBqOyHGVN+l8gF0BucP09fMo0oO/Lb0w1OF80dJv+lDVpXG60WMQvkcxAkNybKsrEIE3ZtKGmPrA==}
-
-  tilg@0.1.1:
-    resolution: {integrity: sha512-0uHyTAUM0tJL792LeviRPFkJtCbF6Za3/hbbnRmWGUaicOhbJ0IpvBViXiXTF7nk6R0L6vve2XLesQzn5jEVng==}
-    peerDependencies:
-      react: ^18.0.0 || ^17.0.0
 
   timers-browserify@2.0.12:
     resolution: {integrity: sha512-9phl76Cqm6FhSX9Xe1ZUAMLtm1BLkKj2Qd5ApyWkXzsMRaA7dgr81kf4wJmQf/hAvg8EEyJxDo3du/0KlhPiKQ==}
@@ -17738,10 +17730,6 @@ snapshots:
   through@2.3.8: {}
 
   thunky@1.1.0: {}
-
-  tilg@0.1.1(react@19.2.8):
-    dependencies:
-      react: 19.2.8
 
   timers-browserify@2.0.12:
     dependencies:

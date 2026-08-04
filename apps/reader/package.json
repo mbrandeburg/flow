@@ -40,7 +40,6 @@
     "react-polymorphic-types": "2.0.0",
     "react-use": "17.6.1",
     "swr": "2.5.0",
-    "tilg": "0.1.1",
     "use-local-storage-state": "20.0.0",
     "uuid": "14.0.1",
     "valtio": "1.6.0"
