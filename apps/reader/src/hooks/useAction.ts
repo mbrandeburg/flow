@@ -1,4 +1,4 @@
-import { atom, useRecoilState, useSetRecoilState } from 'recoil'
+import { atom } from '../atom'
 
 export type Action =
   | 'toc'
@@ -8,15 +8,13 @@ export type Action =
   | 'image'
   | 'timeline'
   | 'theme'
-export const actionState = atom<Action | undefined>({
-  key: 'action',
-  default: undefined,
-})
+
+const action = atom<Action | undefined>(undefined)
 
 export function useSetAction() {
-  return useSetRecoilState(actionState)
+  return action.set
 }
 
 export function useAction() {
-  return useRecoilState(actionState)
+  return action.useState()
 }

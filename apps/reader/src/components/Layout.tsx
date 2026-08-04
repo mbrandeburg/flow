@@ -12,7 +12,6 @@ import {
   MdOutlineLightMode,
 } from 'react-icons/md'
 import { RiFontSize, RiHome6Line, RiSettings5Line } from 'react-icons/ri'
-import { useRecoilState } from 'recoil'
 
 import {
   Env,
@@ -25,7 +24,7 @@ import {
   useTranslation,
 } from '../hooks'
 import { reader, useReaderSnapshot } from '../models'
-import { navbarState } from '../state'
+import { useNavbar } from '../state'
 import { activeClass } from '../styles'
 
 import { SplitView, useSplitViewItem } from './base'
@@ -221,7 +220,7 @@ function PageActionBar({ env }: EnvActionBarProps) {
 function NavigationBar() {
   const r = useReaderSnapshot()
   const readMode = r.focusedTab?.isBook
-  const [visible, setVisible] = useRecoilState(navbarState)
+  const [visible, setVisible] = useNavbar()
 
   return (
     <>

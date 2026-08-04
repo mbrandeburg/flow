@@ -1,31 +1,16 @@
-import { IS_SERVER } from '@literal-ui/hooks'
-import { atom, AtomEffect, useRecoilState } from 'recoil'
-
 import { RenditionSpread } from '@flow/epubjs/types/rendition'
 
-function localStorageEffect<T>(key: string, defaultValue: T): AtomEffect<T> {
-  return ({ setSelf, onSet }) => {
-    if (IS_SERVER) return
+import { atom, persistedAtom } from './atom'
 
-    const savedValue = localStorage.getItem(key)
-    if (savedValue === null) {
-      localStorage.setItem(key, JSON.stringify(defaultValue))
-    } else {
-      setSelf(JSON.parse(savedValue))
-    }
+const navbar = atom<boolean>(false)
 
-    onSet((newValue, _, isReset) => {
-      isReset
-        ? localStorage.removeItem(key)
-        : localStorage.setItem(key, JSON.stringify(newValue))
-    })
-  }
+export function useNavbar() {
+  return navbar.useState()
 }
 
-export const navbarState = atom<boolean>({
-  key: 'navbar',
-  default: false,
-})
+export function useSetNavbar() {
+  return navbar.set
+}
 
 export interface Settings extends TypographyConfiguration {
   theme?: ThemeConfiguration
@@ -48,12 +33,8 @@ interface ThemeConfiguration {
 
 export const defaultSettings: Settings = {}
 
-const settingsState = atom<Settings>({
-  key: 'settings',
-  default: defaultSettings,
-  effects: [localStorageEffect('settings', defaultSettings)],
-})
+const settings = persistedAtom<Settings>('settings', defaultSettings)
 
 export function useSettings() {
-  return useRecoilState(settingsState)
+  return settings.useState()
 }

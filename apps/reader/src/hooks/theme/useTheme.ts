@@ -1,15 +1,13 @@
 import { Theme } from '@material/material-color-utilities'
-import { atom, useRecoilValue, useSetRecoilState } from 'recoil'
 
-const themeState = atom<Theme | undefined>({
-  key: 'theme',
-  default: undefined,
-})
+import { atom } from '../../atom'
+
+const themeAtom = atom<Theme | undefined>(undefined)
 
 export function useTheme() {
-  return useRecoilValue(themeState)
+  return themeAtom.use()
 }
 
 export function useSetTheme() {
-  return useSetRecoilState(themeState)
+  return themeAtom.set
 }
