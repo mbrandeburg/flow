@@ -73,13 +73,15 @@ class BaseTab {
   }
 }
 
-// https://github.com/pmndrs/valtio/blob/92f3311f7f1a9fe2a22096cd30f9174b860488ed/src/vanilla.ts#L6
-type AsRef = { $$valtioRef: true }
+// valtio 2 keeps ref()'d values as-is in snapshots via this brand.
+// https://github.com/pmndrs/valtio/blob/main/src/vanilla.ts (ref / Snapshot)
+type Ref<T> = T & { $$valtioSnapshot: T }
+type RenditionWithManager = Rendition & { manager?: any }
 
 export class BookTab extends BaseTab {
   epub?: Book
-  iframe?: Window & AsRef
-  rendition?: Rendition & { manager?: any }
+  iframe?: Ref<Window>
+  rendition?: Ref<RenditionWithManager>
   nav?: Navigation
   locationToReturn?: Location
   section?: ISection
@@ -130,7 +132,7 @@ export class BookTab extends BaseTab {
     db?.books.update(this.book.id, changes)
   }
 
-  annotationRange?: Range
+  annotationRange?: Ref<Range>
   setAnnotationRange(cfi: string) {
     const range = this.view?.contents.range(cfi)
     if (range) this.annotationRange = ref(range)
@@ -359,7 +361,7 @@ export class BookTab extends BaseTab {
         this.sections = ref(sections)
       })
     })
-    this.rendition = ref(
+    this.rendition = ref<RenditionWithManager>(
       this.epub.renderTo(el, {
         width: '100%',
         height: '100%',

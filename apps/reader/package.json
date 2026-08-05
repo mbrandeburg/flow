@@ -43,7 +43,7 @@
     "swr": "2.5.0",
     "use-local-storage-state": "20.0.0",
     "uuid": "14.0.1",
-    "valtio": "1.6.0"
+    "valtio": "2.3.2"
   },
   "devDependencies": {
     "@flow/tailwind": "workspace:*",
