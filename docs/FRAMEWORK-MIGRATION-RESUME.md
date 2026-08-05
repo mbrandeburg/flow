@@ -174,17 +174,27 @@ node:18→20-alpine (`b6d8bf1`), plus dexie 4 / swr 2 / use-local-storage-state 
   `automountServiceAccountToken: false`. Not auto-applied by CI — `kubectl apply` when ready and watch the rollout.
 - **`cookie` CVE** (`pnpm-workspace.yaml` `overrides: cookie: '>=0.7.0'`, was <0.7.0 via `nookies`).
 
-**Pending your Dropbox runtime test — branch `dropbox-token-httponly` (CI-green, NOT merged):**
-Makes the Dropbox refresh-token cookie `httpOnly` + `sameSite=lax` (it was readable by client JS, so a malicious
-ePub's script in the render iframe could steal the 365-day token → account takeover). Adds a readable companion
-cookie `dropbox-connected` (`mapToConnected` in `sync.ts`) for the UI, and `POST /api/logout/[provider]` to clear
-the httpOnly cookie server-side (client JS can't). **Test connect + disconnect + sync, then merge.**
+**Also merged:** Dropbox refresh-token cookie is now `httpOnly` + `sameSite=lax` (`933461d`) — it was
+readable by client JS, so a malicious ePub's script in the render iframe could steal the 365-day token
+→ account takeover. Added readable companion cookie `dropbox-connected` (`mapToConnected` in `sync.ts`)
+for the UI + `POST /api/logout/[provider]` to clear the httpOnly cookie server-side. **Verify Dropbox
+connect/disconnect/sync now that it's live.**
+
+**Pending your browser test — branch `reader-csp` (CI-green, NOT merged):**
+Strict CSP for the reader (`apps/reader/next.config.mjs`): `default-src 'self'`, tight `connect-src`
+(self + `*.dropboxapi.com` only — caps where a compromised/ePub script can exfiltrate), `frame-src 'self'
+blob: data:`, `worker-src 'self' blob:`, `object-src 'none'`, plus fonts allowlist. **`script-src`/`style-src`
+stay `'unsafe-inline'` on purpose:** the reader is fully static (no `getServerSideProps` anywhere), so a
+per-request nonce can never reach the build-time HTML — nonce CSP is architecturally impossible without
+converting to SSR. Header emission is verified via `curl`; **functional correctness needs a browser** —
+test: app loads (not blank), ePub renders, color-scheme toggle, Dropbox sync, PWA/offline, and **no CSP
+violations in the console**. Then merge.
 
 **Secrets OK:** `DROPBOX_CLIENT_SECRET` is server-only (no `NEXT_PUBLIC_`); `k8s/secret.yaml` has only commented placeholders.
 
 **Recommended next (not done):**
-- **Full CSP `script-src` via nonces** — blocked by inline bootstrap scripts (`_document.tsx` color-scheme IIFE,
-  `Theme.tsx` generated CSS). Needs a nonce middleware or hashing; the current CSP omits `script-src`.
+- **Strict `script-src`** would require converting the reader to SSR (for nonces) or build-time hashing of
+  the inline `_document.tsx` scripts — deferred; `connect-src` already limits the main exfiltration path.
 - **Dockerfile**: pin the `node:26-alpine` base by digest (`@sha256:…`) + `apk upgrade --no-cache` for base-OS CVEs.
 - **`@flow/epubjs` dev tooling** holds the 8 `critical`/61 `high` audit hits (webpack 4, handlebars, etc.) but is
   **not shipped** — built as source and stripped by Next standalone tracing. Upgrading (webpack 4→5, babel 7→8)
