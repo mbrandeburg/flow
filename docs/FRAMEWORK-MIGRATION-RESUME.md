@@ -1,7 +1,55 @@
 # Flow Modernization — Resume Notes
 
 **Last updated:** 2026-08-05
-**Working branch:** `main` (all migrations merged; `main` is green + deployable)
+**Working branch:** `docker-hygiene-pnpm11` (WIP — see "RESUME HERE"). `main` is green + deployable.
+
+---
+
+## ⏸ RESUME HERE — WIP interrupted by a Docker Desktop crash (2026-08-05)
+
+**Docker Desktop crashed because the disk hit 100%** (the fresh `flow-nm11-*` install volumes).
+I cleared ~700 MB of host `.next` artifacts to unstick git, and **the WIP + this doc are committed
+& pushed to `origin/docker-hygiene-pnpm11`** (`5f5750c`) — safe across a reboot/wipe. Everything
+below `## TL;DR` is DONE + on `main`; this branch is the only loose end.
+
+**STEP 0 on resume — free disk space** (Docker won't start with a full disk). Once Docker is up:
+`docker volume ls | grep flow`, then remove the redundant node_modules volume sets — this session
+left THREE full sets (`flow-nm-*` node20, `flow-nm26-*` node26, `flow-nm11-*` pnpm11); you only need
+`flow-store` + one `flow-nm*` set. E.g.
+`docker volume rm $(docker volume ls -q | grep -E 'flow-nm-|flow-nm26-')`, then
+`docker builder prune -f`. Reclaims several GB. (Never `docker system prune -a` / remove kicbase.)
+
+**Branch `docker-hygiene-pnpm11`** holds these WIP edits:
+- **Dockerfile hygiene:** `CMD ["node","apps/reader/server.js"]` (JSON form → clean SIGTERM in
+  k8s), `ENV KEY=value` form, and `turbo prune @flow/reader` (positional; `--scope` was deprecated).
+- **pnpm 10.6.4 → 11.20.0:** `packageManager` in `package.json`, both `npm install -g pnpm@11.20.0`
+  lines in `Dockerfile`, and `PNPM_VER` in `verify-node18.sh`.
+
+**NOT yet finished** (the crash cut this off):
+1. `pnpm-lock.yaml` is **still pnpm-10-generated (lockfileVersion 9.0)** — it was NOT regenerated,
+   so the Dockerfile's `pnpm i --frozen-lockfile` (now pnpm 11) may reject it until it is.
+2. No build validation, no CI run, not merged.
+
+**To resume (once Docker is back):**
+```bash
+git checkout docker-hygiene-pnpm11
+# regenerate the lockfile with pnpm 11 + build both apps (fresh node26/pnpm11 volumes):
+docker run --rm -v "$PWD":/app -w /app \
+  -v flow-store:/root/.local/share/pnpm/store \
+  -v flow-nm11-root:/app/node_modules -v flow-nm11-reader:/app/apps/reader/node_modules \
+  -v flow-nm11-website:/app/apps/website/node_modules -v flow-nm11-internal:/app/packages/internal/node_modules \
+  -v flow-nm11-tailwind:/app/packages/tailwind/node_modules -v flow-nm11-epubjs:/app/packages/epubjs/node_modules \
+  node:26-alpine sh -c "npm i -g pnpm@11.20.0 && pnpm install && pnpm -F reader build && pnpm -F website build"
+git add pnpm-lock.yaml && git commit -m "chore(deps): pnpm 10.6.4 -> 11.20.0 (regenerated lockfile)"
+gh workflow run release.yml --ref docker-hygiene-pnpm11   # arm64 CI; watch, then merge to main
+```
+
+**Also queued (deferred by the crash):** clean up cached Docker volumes. This session created
+several sets — `flow-store` (shared pnpm store), `flow-nm-*` (node20), `flow-nm26-*` (node26),
+`flow-nm11-*` (pnpm11). Reclaim space with `docker volume ls | grep flow`, then
+`docker volume rm <unneeded>` (keep `flow-store` + the one `flow-nm*` set you build with) and
+`docker builder prune -f`. **Never** `docker system prune -a` or remove `gcr.io/k8s-minikube/kicbase`.
+The empty 0B host `node_modules/` dirs from the crashed run are safe to `rm -rf`.
 
 ---
 
