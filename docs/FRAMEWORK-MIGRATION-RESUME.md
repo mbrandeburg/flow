@@ -163,6 +163,35 @@ node:18→20-alpine (`b6d8bf1`), plus dexie 4 / swr 2 / use-local-storage-state 
 
 ---
 
+## Security posture (2026-08-05)
+
+**Merged to `main` (`9d0359e`):**
+- **Reader security headers** (`apps/reader/next.config.mjs` `headers()`): `X-Content-Type-Options: nosniff`,
+  `X-Frame-Options: DENY`, `Referrer-Policy`, `Permissions-Policy`, HSTS, and a CSP subset
+  (`frame-ancestors 'none'; base-uri 'self'; object-src 'none'; form-action 'self'`).
+- **k8s hardening** (`k8s/deployment.yaml`): `runAsNonRoot`/1001, drop `ALL` caps, `allowPrivilegeEscalation: false`,
+  `readOnlyRootFilesystem: true` (+ `emptyDir` for `/tmp` and `.next/cache`), `seccompProfile: RuntimeDefault`,
+  `automountServiceAccountToken: false`. Not auto-applied by CI — `kubectl apply` when ready and watch the rollout.
+- **`cookie` CVE** (`pnpm-workspace.yaml` `overrides: cookie: '>=0.7.0'`, was <0.7.0 via `nookies`).
+
+**Pending your Dropbox runtime test — branch `dropbox-token-httponly` (CI-green, NOT merged):**
+Makes the Dropbox refresh-token cookie `httpOnly` + `sameSite=lax` (it was readable by client JS, so a malicious
+ePub's script in the render iframe could steal the 365-day token → account takeover). Adds a readable companion
+cookie `dropbox-connected` (`mapToConnected` in `sync.ts`) for the UI, and `POST /api/logout/[provider]` to clear
+the httpOnly cookie server-side (client JS can't). **Test connect + disconnect + sync, then merge.**
+
+**Secrets OK:** `DROPBOX_CLIENT_SECRET` is server-only (no `NEXT_PUBLIC_`); `k8s/secret.yaml` has only commented placeholders.
+
+**Recommended next (not done):**
+- **Full CSP `script-src` via nonces** — blocked by inline bootstrap scripts (`_document.tsx` color-scheme IIFE,
+  `Theme.tsx` generated CSS). Needs a nonce middleware or hashing; the current CSP omits `script-src`.
+- **Dockerfile**: pin the `node:26-alpine` base by digest (`@sha256:…`) + `apk upgrade --no-cache` for base-OS CVEs.
+- **`@flow/epubjs` dev tooling** holds the 8 `critical`/61 `high` audit hits (webpack 4, handlebars, etc.) but is
+  **not shipped** — built as source and stripped by Next standalone tracing. Upgrading (webpack 4→5, babel 7→8)
+  clears the audit noise; low real risk, high churn.
+
+---
+
 ## Known caveats & deferred work
 
 ### ⚠️ `pnpm lint` is broken under TypeScript 7
