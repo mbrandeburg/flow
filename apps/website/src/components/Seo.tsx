@@ -1,17 +1,13 @@
-import { NextSeo, NextSeoProps } from 'next-seo'
+import Head from 'next/head'
 import useTranslation from 'next-translate/useTranslation'
 
-export interface SeoProps extends Omit<NextSeoProps, 'title'> {
+export interface SeoProps {
   scope?: string
   title?: string
+  description?: string
 }
 
-export const Seo: React.FC<SeoProps> = ({
-  scope,
-  title,
-  description,
-  ...seoProps
-}) => {
+export const Seo: React.FC<SeoProps> = ({ scope, title, description }) => {
   const { t } = useTranslation()
   title = title ?? t(`page.${scope}.title`)
 
@@ -20,10 +16,9 @@ export const Seo: React.FC<SeoProps> = ({
   }
 
   return (
-    <NextSeo
-      title={scope === 'home' ? title : `${title} - Flow`}
-      description={description ?? t('desc')}
-      {...seoProps}
-    />
+    <Head>
+      <title>{scope === 'home' ? title : `${title} - Flow`}</title>
+      <meta name="description" content={description ?? t('desc')} />
+    </Head>
   )
 }

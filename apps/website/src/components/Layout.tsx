@@ -7,7 +7,7 @@ import { RiGithubFill } from 'react-icons/ri'
 
 import { localeMap } from '../../i18n'
 
-export const Layout: React.FC = ({ children }) => {
+export const Layout: React.FC<React.PropsWithChildren> = ({ children }) => {
   return (
     <div className="flex min-h-screen flex-col">
       <Header />

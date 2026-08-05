@@ -2,9 +2,9 @@
   "name": "@flow/website",
   "private": true,
   "scripts": {
-    "dev": "next dev -p 7117",
-    "build": "next build",
-    "analyze": "cross-env ANALYZE=true next build",
+    "dev": "next dev --webpack -p 7117",
+    "build": "next build --webpack",
+    "analyze": "cross-env ANALYZE=true next build --webpack",
     "start": "next start",
     "lint": "eslint ."
   },
@@ -13,36 +13,36 @@
     "@literal-ui/core": "0.0.14",
     "@literal-ui/hooks": "0.0.9",
     "@literal-ui/next": "0.0.4",
-    "@mdx-js/loader": "2.1.1",
-    "@mdx-js/react": "2.1.1",
-    "@next/bundle-analyzer": "12.1.6",
+    "@mdx-js/loader": "3.1.1",
+    "@mdx-js/react": "3.1.1",
+    "@next/bundle-analyzer": "16.3.0",
     "babel-loader": "8.2.5",
     "clsx": "2.1.1",
     "gray-matter": "4.0.3",
-    "next": "12.1.5",
-    "next-seo": "7.3.0",
-    "next-translate": "1.6.0",
-    "react": "18.0.0",
-    "react-dom": "18.0.0",
-    "react-icons": "4.3.1",
+    "next": "16.3.0",
+    "next-translate": "3.2.0",
+    "react": "19.2.8",
+    "react-dom": "19.2.8",
+    "react-icons": "5.7.0",
     "react-use": "17.6.1",
     "rehype-pretty-code": "0.14.5",
-    "shiki": "0.10.1"
+    "shiki": "4.4.2"
   },
   "devDependencies": {
     "@literal-ui/plugins": "0.0.4",
     "@tailwindcss/aspect-ratio": "0.4.2",
     "@tailwindcss/line-clamp": "0.4.4",
-    "@types/node": "17.0.22",
-    "@types/react": "17.0.43",
+    "@types/node": "20.19.43",
+    "@types/react": "19.2.18",
+    "@types/react-dom": "19.2.4",
     "autoprefixer": "10.5.4",
     "m3-tokens": "0.0.3",
-    "next-transpile-modules": "9.0.0",
+    "next-translate-plugin": "3.2.0",
     "postcss": "8.5.25",
     "tailwindcss": "3.2.0",
     "type-fest": "5.8.0"
   },
   "engines": {
-    "node": ">=18.0.0"
+    "node": ">=20.9.0"
   }
 }
