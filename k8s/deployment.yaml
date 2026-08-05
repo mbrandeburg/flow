@@ -15,10 +15,24 @@ spec:
       labels:
         app: flow-reader
     spec:
+      automountServiceAccountToken: false
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1001
+        runAsGroup: 1001
+        fsGroup: 1001
+        seccompProfile:
+          type: RuntimeDefault
       containers:
       - name: flow-reader
         image: ghcr.io/mbrandeburg/flow:latest
         imagePullPolicy: Always
+        securityContext:
+          allowPrivilegeEscalation: false
+          readOnlyRootFilesystem: true
+          capabilities:
+            drop:
+            - ALL
         ports:
         - containerPort: 3000
           protocol: TCP
@@ -54,9 +68,18 @@ spec:
           timeoutSeconds: 3
           failureThreshold: 3
         volumeMounts:
+        # Writable paths required because the root filesystem is read-only.
+        - name: tmp
+          mountPath: /tmp
+        - name: next-cache
+          mountPath: /app/apps/reader/.next/cache
         - name: data
           mountPath: /app/data
       volumes:
+      - name: tmp
+        emptyDir: {}
+      - name: next-cache
+        emptyDir: {}
       - name: data
         persistentVolumeClaim:
           claimName: flow-reader-data

@@ -20,6 +20,29 @@ const withSerwist = withSerwistInit({
 
 const IS_DOCKER = process.env.DOCKER
 
+// Sent on every response. Scripts/styles are left to Next (the app uses inline
+// bootstrap scripts, so a strict script-src needs nonces — tracked separately);
+// these directives harden clickjacking, MIME sniffing, referrer leakage and
+// device APIs without touching rendering.
+const securityHeaders = [
+  { key: 'X-Content-Type-Options', value: 'nosniff' },
+  { key: 'X-Frame-Options', value: 'DENY' },
+  { key: 'Referrer-Policy', value: 'strict-origin-when-cross-origin' },
+  {
+    key: 'Permissions-Policy',
+    value: 'camera=(), microphone=(), geolocation=(), browsing-topics=()',
+  },
+  {
+    key: 'Strict-Transport-Security',
+    value: 'max-age=63072000; includeSubDomains; preload',
+  },
+  {
+    key: 'Content-Security-Policy',
+    value:
+      "frame-ancestors 'none'; base-uri 'self'; object-src 'none'; form-action 'self'",
+  },
+]
+
 /**
  * @type {import('next').NextConfig}
  **/
@@ -35,6 +58,9 @@ const config = {
   i18n: {
     locales: ['en-US', 'zh-CN', 'ja-JP', 'de-DE'],
     defaultLocale: 'en-US',
+  },
+  async headers() {
+    return [{ source: '/:path*', headers: securityHeaders }]
   },
   ...(IS_DOCKER && {
     output: 'standalone',
