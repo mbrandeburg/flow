@@ -1,3 +1,25 @@
 packages:
   - "apps/*"
   - "packages/*"
+
+# Supply-chain cooldown (pnpm >=11 default): only install versions published at
+# least a day ago. Exclude the shiki family (website-only syntax highlighter),
+# whose exact-pinned versions are often published within the window on bump.
+minimumReleaseAge: 1440
+minimumReleaseAgeExclude:
+  - shiki
+  - "@shikijs/*"
+
+# pnpm >=11 fails install on unreviewed dependency build scripts (pnpm 10 only
+# warned). None of these are needed by the reader/website builds (Next uses SWC;
+# these are release/test/lint-only), so explicitly deny them to keep the
+# supply-chain surface identical to what shipped on main. (v11 replaced
+# ignoredBuiltDependencies with the allowBuilds map.)
+allowBuilds:
+  "@sentry/cli": false
+  core-js: false
+  es5-ext: false
+  esbuild: false
+  next-translate-plugin: false
+  phantomjs-prebuilt: false
+  unrs-resolver: false

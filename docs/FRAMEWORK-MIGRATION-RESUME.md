@@ -1,7 +1,55 @@
 # Flow Modernization — Resume Notes
 
 **Last updated:** 2026-08-05
-**Working branch:** `main` (all migrations merged; `main` is green + deployable)
+**Working branch:** `docker-hygiene-pnpm11` (WIP — see "RESUME HERE"). `main` is green + deployable.
+
+---
+
+## ⏸ RESUME HERE — pnpm 11 supply-chain gates fixed; only CI + merge left (2026-08-05)
+
+The post-crash WIP is now **build-validated under pnpm 11** and pushed to
+`origin/docker-hygiene-pnpm11` (`fe9e356`). STEP 0 (disk cleanup) and the two new pnpm 11
+blockers are DONE. **Only CI validation + merge to `main` remain.**
+
+**What the branch now contains** (all committed + pushed):
+- **Dockerfile hygiene** (`5f5750c`): `CMD ["node","apps/reader/server.js"]` (JSON form → clean
+  SIGTERM in k8s), `ENV KEY=value` form, `turbo prune @flow/reader` (positional; `--scope` gone).
+- **pnpm 10.6.4 → 11.20.0** (`5f5750c`): `packageManager` in `package.json`, both
+  `npm install -g pnpm@11.20.0` lines in `Dockerfile`, `PNPM_VER` in `verify-node18.sh`.
+- **pnpm 11 supply-chain config** (`fe9e356`, in `pnpm-workspace.yaml`) — see next section.
+
+**Two NEW pnpm 11 blockers hit on resume (NOT present at crash time), both fixed:**
+1. **`minimumReleaseAge` cooldown** — pnpm 11 defaults it to `1440` min (1 day) and REFUSES to
+   install versions younger than that. `shiki`/`@shikijs/*@4.4.2` (website highlighter, published
+   same day) were rejected. Fix: kept the cooldown, added `minimumReleaseAgeExclude: [shiki, '@shikijs/*']`.
+2. **`ERR_PNPM_IGNORED_BUILDS` is now FATAL** (pnpm 10 only warned) — `pnpm i --frozen-lockfile`
+   exits 1 on any unreviewed dep build script, which also cascades into `pnpm -F reader build`
+   (its `verifyDepsBeforeRun` runs install first). pnpm 11 **removed `ignoredBuiltDependencies`**;
+   the replacement is the `allowBuilds` map. Fix: `allowBuilds:` with `@sentry/cli, core-js,
+   es5-ext, esbuild, next-translate-plugin, phantomjs-prebuilt, unrs-resolver` all set to `false`
+   (none are needed by the Next/SWC builds — release/test/lint-only; mirrors main's behavior).
+   NOTE: a failed install auto-injects a placeholder `allowBuilds` block at the top of
+   `pnpm-workspace.yaml` ("set this to true or false") → "duplicated mapping key"; delete it.
+
+**The lockfile did NOT need regenerating** — pnpm 11 accepts the existing `9.0` lockfile as-is
+("Lockfile is up to date"). The crash-time worry about `--frozen-lockfile` rejecting it was unfounded;
+the real blockers were the two supply-chain gates above. `pnpm-lock.yaml` is unchanged.
+
+**Verified green** (node:26-alpine, flow-nm11 volumes): `pnpm i --frozen-lockfile` exit 0,
+reader `✓ Compiled successfully`, website `✓ Compiled successfully`.
+
+**To finish:**
+```bash
+git checkout docker-hygiene-pnpm11
+gh workflow run release.yml --ref docker-hygiene-pnpm11   # arm64 CI; tags branch image, NOT latest
+gh run watch <run-id> --exit-status --interval 20         # then merge to main when green
+```
+
+**⚠️ Host disk sink — `.pnpm-store`:** pnpm 11 writes its store to `<repo>/.pnpm-store` (gitignored)
+despite the `flow-store` volume mount — it hit **2.7 GB** (`v10` + `v11`) and is the same disk-full
+vector as the original crash. `rm -rf .pnpm-store` after builds (regenerable). Consider pinning
+`storeDir` to the mounted volume if this keeps recurring. Also keep only `flow-store` + one
+`flow-nm*` volume set. **Never** `docker system prune -a` or remove `gcr.io/k8s-minikube/kicbase`.
 
 ---
 

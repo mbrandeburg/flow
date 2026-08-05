@@ -7,10 +7,10 @@ RUN apk update
 # Set working directory
 WORKDIR /app
 # Node 25+ dropped the bundled corepack; install the pinned pnpm via npm.
-RUN npm install -g pnpm@10.6.4
+RUN npm install -g pnpm@11.20.0
 COPY . .
 # Only Take packages that are needed to compile this app
-RUN pnpm dlx turbo prune --scope=@flow/reader --docker
+RUN pnpm dlx turbo prune @flow/reader --docker
 
 # Add lockfile and package.json's of isolated subworkspace
 FROM node:26-alpine AS installer
@@ -22,7 +22,7 @@ WORKDIR /app
 COPY .gitignore .gitignore
 COPY --from=builder /app/out/json/ .
 COPY --from=builder /app/out/pnpm-*.yaml .
-RUN npm install -g pnpm@10.6.4
+RUN npm install -g pnpm@11.20.0
 RUN pnpm i --frozen-lockfile
 
 # Build the project
@@ -51,7 +51,7 @@ COPY --from=installer --chown=nextjs:nodejs /app/apps/reader/public ./apps/reade
 
 EXPOSE 3000
 
-ENV PORT 3000
-ENV NODE_ENV production
+ENV PORT=3000
+ENV NODE_ENV=production
 
-CMD node apps/reader/server.js
+CMD ["node", "apps/reader/server.js"]
