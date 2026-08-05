@@ -20,7 +20,7 @@
 set -euo pipefail
 cd "$(dirname "$0")/.."
 
-PNPM_VER="10.6.4"
+PNPM_VER="11.20.0"
 IMAGE="node:26-alpine"
 
 # Named volumes keep Linux node_modules separate from the host's macOS ones.
