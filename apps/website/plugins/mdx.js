@@ -7,6 +7,7 @@ module.exports = async function (src) {
   const code =
     // based on `baseUrl` in `tsconfig.json`
     `import {withLayout} from 'apps/website/src/components';
+export {getStaticProps} from 'apps/website/src/mdxStaticProps';
 
 export default withLayout(${JSON.stringify(data)})
 

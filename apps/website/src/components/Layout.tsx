@@ -1,11 +1,31 @@
-import { Link } from '@literal-ui/next'
 import clsx from 'clsx'
+import NextLink from 'next/link'
 import { useRouter } from 'next/router'
 import useTranslation from 'next-translate/useTranslation'
 import { ComponentProps } from 'react'
 import { RiGithubFill } from 'react-icons/ri'
 
 import { localeMap } from '../../i18n'
+
+// Modern next/link wrapper (no <a> child) preserving external-link rel/target.
+function Link({
+  href,
+  className,
+  children,
+  ...props
+}: ComponentProps<typeof NextLink>) {
+  const external = typeof href === 'string' && href.startsWith('http')
+  return (
+    <NextLink
+      href={href}
+      className={className}
+      {...(external ? { target: '_blank', rel: 'noopener' } : {})}
+      {...props}
+    >
+      {children}
+    </NextLink>
+  )
+}
 
 export const Layout: React.FC<React.PropsWithChildren> = ({ children }) => {
   return (
