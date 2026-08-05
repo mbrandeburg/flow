@@ -3,10 +3,10 @@
   "private": true,
   "scripts": {
     "dev": "next dev -p 7127",
-    "build": "next build",
-    "analyze": "cross-env ANALYZE=true next build",
+    "build": "next build --webpack",
+    "analyze": "cross-env ANALYZE=true next build --webpack",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "eslint ."
   },
   "dependencies": {
     "@flow/epubjs": "workspace:*",
@@ -16,8 +16,9 @@
     "@literal-ui/hooks": "0.0.9",
     "@literal-ui/next": "0.0.4",
     "@material/material-color-utilities": "0.4.0",
-    "@next/bundle-analyzer": "12.1.6",
-    "@sentry/nextjs": "7.12.1",
+    "@next/bundle-analyzer": "16.3.0",
+    "@sentry/nextjs": "10.69.0",
+    "@serwist/next": "9.5.12",
     "@types/react-highlight-words": "0.20.1",
     "babel-loader": "8.2.5",
     "clsx": "2.1.1",
@@ -27,20 +28,19 @@
     "dropbox": "10.42.0",
     "file-saver": "2.0.5",
     "jszip": "3.10.1",
-    "next": "12.3.4",
+    "next": "16.3.0",
     "next-seo": "7.3.0",
     "nookies": "2.5.2",
-    "react": "18.0.0",
+    "react": "19.2.8",
     "react-cool-virtual": "0.7.0",
-    "react-dom": "18.0.0",
+    "react-dom": "19.2.8",
     "react-focus-lock": "2.13.7",
     "react-highlight-words": "0.21.0",
-    "react-icons": "4.3.1",
+    "react-icons": "5.7.0",
     "react-photo-view": "1.2.7",
     "react-polymorphic-types": "2.0.0",
     "react-use": "17.6.1",
     "swr": "2.5.0",
-    "tilg": "0.1.1",
     "use-local-storage-state": "20.0.0",
     "uuid": "14.0.1",
     "valtio": "1.6.0"
@@ -48,19 +48,18 @@
   "devDependencies": {
     "@flow/tailwind": "workspace:*",
     "@tailwindcss/aspect-ratio": "0.4.2",
-    "@tailwindcss/line-clamp": "0.4.4",
     "@types/file-saver": "2.0.7",
-    "@types/node": "17.0.22",
-    "@types/react": "17.0.43",
+    "@types/node": "20.19.43",
+    "@types/react": "19.2.18",
+    "@types/react-dom": "19.2.4",
     "@types/uuid": "11.0.0",
     "autoprefixer": "10.5.4",
-    "next-pwa": "5.6.0",
-    "next-transpile-modules": "9.0.0",
     "postcss": "8.5.25",
-    "tailwindcss": "3.2.0",
+    "serwist": "9.5.12",
+    "tailwindcss": "3.4.19",
     "type-fest": "5.8.0"
   },
   "engines": {
-    "node": ">=18.0.0"
+    "node": ">=20.9.0"
   }
 }

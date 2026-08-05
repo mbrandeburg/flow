@@ -1,2 +1,6 @@
 # Sentry
 .sentryclirc
+
+# Serwist
+public/sw*
+public/swe-worker*

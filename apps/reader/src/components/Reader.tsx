@@ -10,7 +10,6 @@ import React, {
 import { MdChevronRight, MdWebAsset } from 'react-icons/md'
 import { RiBookLine } from 'react-icons/ri'
 import { PhotoSlider } from 'react-photo-view'
-import useTilg from 'tilg'
 import { useSnapshot } from 'valtio'
 
 import { RenditionSpread } from '@flow/epubjs/types/rendition'
@@ -71,7 +70,7 @@ export function ReaderGridView() {
   if (!groups.length) return null
   return (
     <SplitView className={clsx('ReaderGridView')}>
-      {groups.map(({ id }, i) => (
+      {(groups as readonly { id: string }[]).map(({ id }, i) => (
         <ReaderGroup key={id} index={i} />
       ))}
     </SplitView>
@@ -106,7 +105,7 @@ function ReaderGroup({ index }: ReaderGroupProps) {
         className="hidden sm:flex"
         onDelete={() => reader.removeGroup(index)}
       >
-        {tabs.map((tab, i) => {
+        {(tabs as typeof group.tabs).map((tab, i) => {
           const selected = i === selectedIndex
           const focused = index === focusedIndex && selected
           return (
@@ -193,6 +192,7 @@ function ReaderGroup({ index }: ReaderGroupProps) {
 
 interface PaneContainerProps {
   active: boolean
+  children?: React.ReactNode
 }
 const PaneContainer: React.FC<PaneContainerProps> = ({ active, children }) => {
   return <div className={clsx('h-full', active || 'hidden')}>{children}</div>
@@ -211,8 +211,6 @@ function BookPane({ tab, onMouseDown }: BookPaneProps) {
   const [background] = useBackground()
 
   const { iframe, rendition, rendered, container } = useSnapshot(tab)
-
-  useTilg()
 
   useEffect(() => {
     const el = ref.current
