@@ -94,7 +94,12 @@ gh run watch <run-id> --exit-status --interval 20
 - **Node 26 experimental `localStorage`**: build logs show `ExperimentalWarning: localStorage is
   not available…` during static generation — benign (the app detects server/client via `window`,
   not `localStorage`).
-- **Node deprecation annotation** in CI runs is harmless (GitHub runner notice, not our code).
+- **CI runs on a NATIVE arm64 runner** (`ubuntu-24.04-arm`), not QEMU. Node 26's newer V8
+  crashes QEMU's arm64 emulation (`qemu: illegal instruction` during install) — building
+  natively avoids it and is ~5× faster (~3 min vs ~16). `ubuntu-24.04-arm` = the runner OS
+  (Ubuntu 24.04), unrelated to Node. GitHub's action runtime is Node 24 (GitHub's choice, not ours).
+- **GitHub Actions are pinned to latest majors** (checkout v7, setup-buildx v4, login v4,
+  metadata v6, build-push v7, attest-build-provenance v4) — clears the Node 20 / punycode notices.
 
 ---
 
@@ -107,6 +112,7 @@ gh run watch <run-id> --exit-status --interval 20
 | `2081ce8` | **Website: Next 12→16 + React 18→19** (MDX 3, next-translate 3 via `next-translate-plugin`, shiki 4). `next-transpile-modules`→`transpilePackages`, build/dev use `--webpack`. |
 | `ef0a994` | **TypeScript 5.9.3 → 7.0.2** (native compiler). Root tsconfig: removed `baseUrl`, `moduleResolution` node→bundler, relative `paths`. |
 | `8bc86f3` | **valtio 1.6.0 → 2.3.2.** New ref-brand handling in `models/reader.ts` (see caveats). |
+| `1e4835f` | **Base image node:20 → node:26-alpine** (corepack gone in Node 25+ → `npm i -g pnpm`). **CI now runs on a native arm64 runner** (`ubuntu-24.04-arm`) instead of QEMU, and GitHub Actions bumped to latest majors. |
 
 Earlier base work (also on `main`): tooling majors (`a53bd48`), recoil→valtio (`d772bab`),
 node:18→20-alpine (`b6d8bf1`), plus dexie 4 / swr 2 / use-local-storage-state 20 / type-fest 5.
