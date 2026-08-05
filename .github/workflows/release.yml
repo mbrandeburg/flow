@@ -19,7 +19,10 @@ env:
 
 jobs:
   build-and-push:
-    runs-on: ubuntu-latest
+    # Native arm64 runner builds linux/arm64 WITHOUT QEMU. Node 26's newer V8
+    # emits instructions QEMU's arm64 emulation crashes on ("illegal
+    # instruction" during install); native arm64 avoids that and is far faster.
+    runs-on: ubuntu-24.04-arm
     permissions:
       contents: read
       packages: write
