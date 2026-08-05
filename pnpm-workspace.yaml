@@ -23,3 +23,8 @@ allowBuilds:
   next-translate-plugin: false
   phantomjs-prebuilt: false
   unrs-resolver: false
+
+# Force the transitive cookie dep (via nookies, used in the Dropbox auth path)
+# to a version patching GHSA-pxg6-pf52-xh8x. API-compatible with nookies.
+overrides:
+  cookie: ">=0.7.0"
