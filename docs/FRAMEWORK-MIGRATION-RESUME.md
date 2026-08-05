@@ -180,17 +180,20 @@ readable by client JS, so a malicious ePub's script in the render iframe could s
 for the UI + `POST /api/logout/[provider]` to clear the httpOnly cookie server-side. **Verify Dropbox
 connect/disconnect/sync now that it's live.**
 
-**Pending your browser test — branch `reader-csp` (CI-green, NOT merged):**
-Strict CSP for the reader (`apps/reader/next.config.mjs`): `default-src 'self'`, tight `connect-src`
-(self + `*.dropboxapi.com` only — caps where a compromised/ePub script can exfiltrate), `frame-src 'self'
-blob: data:`, `worker-src 'self' blob:`, `object-src 'none'`, plus fonts allowlist. **`script-src`/`style-src`
-stay `'unsafe-inline'` on purpose:** the reader is fully static (no `getServerSideProps` anywhere), so a
-per-request nonce can never reach the build-time HTML — nonce CSP is architecturally impossible without
-converting to SSR. Header emission is verified via `curl`; **functional correctness needs a browser** —
-test: app loads (not blank), ePub renders, color-scheme toggle, Dropbox sync, PWA/offline, and **no CSP
-violations in the console**. Then merge.
+**Also merged — strict CSP for the reader (`6d94a2e`, Playwright-validated in a real browser):**
+(`apps/reader/next.config.mjs`) `default-src 'self'`, tight `connect-src` (self + `blob:` + `*.dropboxapi.com`
+only — caps where a compromised/ePub script can exfiltrate), `frame-src 'self' blob: data:`, `worker-src 'self'
+blob:`, `object-src 'none'`, fonts allowlist. **`script-src`/`style-src` stay `'unsafe-inline'` on purpose:**
+the reader is fully static (no `getServerSideProps` anywhere), so a per-request nonce can never reach the
+build-time HTML — nonce CSP is architecturally impossible without converting to SSR. Browser test (prod image
+in Docker + Playwright): app loads, `test.epub` renders in the epub.js iframe, TOC/chapter nav works, inline
+scripts run, **0 CSP violations**. The one issue it caught — epub.js `fetch()`es the opened book as a `blob:`
+URL → added `blob:` to `connect-src`. (The epub.js content iframe uses `allow-scripts allow-same-origin`; that
+sandbox warning is inherent to epub.js, not the CSP.)
 
 **Secrets OK:** `DROPBOX_CLIENT_SECRET` is server-only (no `NEXT_PUBLIC_`); `k8s/secret.yaml` has only commented placeholders.
+
+**Verify live:** Dropbox connect/disconnect/sync (the httpOnly-cookie change) against your real Dropbox app.
 
 **Recommended next (not done):**
 - **Strict `script-src`** would require converting the reader to SSR (for nonces) or build-time hashing of
