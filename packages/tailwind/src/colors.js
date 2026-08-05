@@ -5,11 +5,10 @@ function makeColorString(variable, opacity) {
   return `rgb(var(${variable}) / ${opacity})`
 }
 
+// Tailwind v4 dropped the `({ opacityValue }) => …` closure color signature.
+// Use the `<alpha-value>` placeholder so the `/opacity` modifier still works.
 function withOpacity(variable, opacityPreset) {
-  return ({ opacityValue }) => {
-    const opacity = opacityPreset || opacityValue
-    return makeColorString(variable, opacity)
-  }
+  return makeColorString(variable, opacityPreset || '<alpha-value>')
 }
 
 function makeLinearGradient(color) {
