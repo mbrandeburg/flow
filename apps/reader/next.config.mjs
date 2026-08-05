@@ -1,7 +1,21 @@
-const path = require('path')
+import path from 'node:path'
+import { fileURLToPath } from 'node:url'
 
-const withBundleAnalyzer = require('@next/bundle-analyzer')({
+import bundleAnalyzer from '@next/bundle-analyzer'
+import withSerwistInit from '@serwist/next'
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url))
+
+const withBundleAnalyzer = bundleAnalyzer({
   enabled: process.env.ANALYZE === 'true',
+})
+
+const withSerwist = withSerwistInit({
+  swSrc: 'service-worker/index.ts',
+  swDest: 'public/sw.js',
+  // Serwist's precache injection runs in the webpack build; `next dev` uses
+  // Turbopack, so keep the service worker out of development.
+  disable: process.env.NODE_ENV === 'development',
 })
 
 const IS_DOCKER = process.env.DOCKER
@@ -29,6 +43,5 @@ const config = {
 }
 
 // TODO(framework-migration): re-add Sentry (v10 withSentryConfig single-options
-// signature + instrumentation files) and PWA (@ducanh2912/next-pwa or
-// @serwist/next) once the core Next 16 build is green.
-module.exports = withBundleAnalyzer(config)
+// signature + instrumentation files, env-guarded DSN) once wired.
+export default withSerwist(withBundleAnalyzer(config))
