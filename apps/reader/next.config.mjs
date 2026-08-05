@@ -20,10 +20,29 @@ const withSerwist = withSerwistInit({
 
 const IS_DOCKER = process.env.DOCKER
 
-// Sent on every response. Scripts/styles are left to Next (the app uses inline
-// bootstrap scripts, so a strict script-src needs nonces — tracked separately);
-// these directives harden clickjacking, MIME sniffing, referrer leakage and
-// device APIs without touching rendering.
+// The reader is a fully static (SSG) Pages Router app, so a per-request nonce
+// can't reach the build-time HTML — `script-src`/`style-src` therefore stay
+// `'unsafe-inline'`. The real hardening here is a tight `connect-src` (caps where
+// a compromised script — e.g. from a malicious ePub — can exfiltrate to) plus
+// locked-down default/frame/object/worker sources.
+// NOTE: enabling Google Tag Manager (NEXT_PUBLIC_GTM_ID) needs script-src/img-src/
+// connect-src additions for googletagmanager.com.
+const csp = [
+  "default-src 'self'",
+  "script-src 'self' 'unsafe-inline'",
+  "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
+  "img-src 'self' data: blob: https:",
+  "font-src 'self' data: https://fonts.gstatic.com",
+  "connect-src 'self' https://api.dropboxapi.com https://content.dropboxapi.com https://notify.dropboxapi.com",
+  "frame-src 'self' blob: data:",
+  "worker-src 'self' blob:",
+  "manifest-src 'self'",
+  "frame-ancestors 'none'",
+  "base-uri 'self'",
+  "object-src 'none'",
+  "form-action 'self'",
+].join('; ')
+
 const securityHeaders = [
   { key: 'X-Content-Type-Options', value: 'nosniff' },
   { key: 'X-Frame-Options', value: 'DENY' },
@@ -36,11 +55,7 @@ const securityHeaders = [
     key: 'Strict-Transport-Security',
     value: 'max-age=63072000; includeSubDomains; preload',
   },
-  {
-    key: 'Content-Security-Policy',
-    value:
-      "frame-ancestors 'none'; base-uri 'self'; object-src 'none'; form-action 'self'",
-  },
+  { key: 'Content-Security-Policy', value: csp },
 ]
 
 /**
