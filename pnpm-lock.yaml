@@ -171,8 +171,8 @@ importers:
         specifier: 14.0.1
         version: 14.0.1
       valtio:
-        specifier: 1.6.0
-        version: 1.6.0(@babel/helper-module-imports@7.25.9)(@babel/types@7.26.5)(react@19.2.8)
+        specifier: 2.3.2
+        version: 2.3.2(@types/react@19.2.18)(react@19.2.8)
     devDependencies:
       '@flow/tailwind':
         specifier: workspace:*
@@ -7239,8 +7239,8 @@ packages:
     resolution: {integrity: sha512-llQsMLSUDUPT44jdrU/O37qlnifitDP+ZwrmmZcoSKyLKvtZxpyV0n2/bD/N4tBAAZ/gJEdZU7KMraoK1+XYAg==}
     engines: {node: '>= 0.10'}
 
-  proxy-compare@2.1.0:
-    resolution: {integrity: sha512-wapJ3h/w8fRSyPEG0y2WMV+tf9xwvj3nxM6aHVuPEOwKs/t5xLSKZb44ubNTiqq2T6lmEMHEWGMTaU2L6ddaFA==}
+  proxy-compare@3.0.1:
+    resolution: {integrity: sha512-V9plBAt3qjMlS1+nC8771KNf6oJ12gExvaxnNzN/9yVRLdTv/lc+oJlnSzrdYDAvBfTStPCoiaCOTmTs0adv7Q==}
 
   proxy-from-env@1.1.0:
     resolution: {integrity: sha512-D+zkORCbA9f1tdWRK0RaCR3GPv50cMxcrz4X8k5LTSUD1Dkw47mKJEZQNunItRTkWwgtaUSo1RVFRIG9ZXiFYg==}
@@ -8803,11 +8803,6 @@ packages:
       '@types/react':
         optional: true
 
-  use-sync-external-store@1.0.0:
-    resolution: {integrity: sha512-AFVsxg5GkFg8GDcxnl+Z0lMAz9rE8DGJCc28qnBuQF7lac57B5smLcT37aXpXIIPz75rW4g3eXHPjhHwdGskOw==}
-    peerDependencies:
-      react: ^16.8.0 || ^17.0.0 || ^18.0.0-rc
-
   use-sync-external-store@1.6.0:
     resolution: {integrity: sha512-Pp6GSwGP/NrPIrxVFAIkOQeyw8lFenOHijQWkUTrDvrF4ALqylP2C/KCkeS9dpUM3KvYRQhna5vt7IL95+ZQ9w==}
     peerDependencies:
@@ -8850,28 +8845,16 @@ packages:
   validate-npm-package-license@3.0.4:
     resolution: {integrity: sha512-DpKm2Ui/xN7/HQKCtpZxoRWBhZ9Z0kqtygG8XCgNQ8ZlDnxuQmWhj566j8fN4Cu3/JmbhsDo7fcAJq4s9h27Ew==}
 
-  valtio@1.6.0:
-    resolution: {integrity: sha512-I/AUMRGlGpskbTdwYbiJutMKq4AHPgV8GWMwvPPQ6jdAhlWO4gheK4bTKZ22Ff5ONXjjZE8mQ0vL5l0em4wJGg==}
-    engines: {node: '>=12.7.0'}
+  valtio@2.3.2:
+    resolution: {integrity: sha512-YXhWQei9IN/ZDce9rhL3trCq9+vVq8M1gWmKVdP3YSZ2gxsmmNWVbxXwf9yG6ffu/dAvAD91nevg8xirGr4Dhg==}
+    engines: {node: '>=12.20.0'}
     peerDependencies:
-      '@babel/helper-module-imports': '>=7.12'
-      '@babel/types': '>=7.13'
-      aslemammad-vite-plugin-macro: '>=1.0.0-alpha.1'
-      babel-plugin-macros: '>=3.0'
-      react: '>=16.8'
-      vite: '>=2.8.6'
+      '@types/react': '>=18.0.0'
+      react: '>=18.0.0'
     peerDependenciesMeta:
-      '@babel/helper-module-imports':
-        optional: true
-      '@babel/types':
-        optional: true
-      aslemammad-vite-plugin-macro:
-        optional: true
-      babel-plugin-macros:
+      '@types/react':
         optional: true
       react:
-        optional: true
-      vite:
         optional: true
 
   value-or-function@3.0.0:
@@ -17112,7 +17095,7 @@ snapshots:
       forwarded: 0.2.0
       ipaddr.js: 1.9.1
 
-  proxy-compare@2.1.0: {}
+  proxy-compare@3.0.1: {}
 
   proxy-from-env@1.1.0: {}
 
@@ -19113,10 +19096,6 @@ snapshots:
     optionalDependencies:
       '@types/react': 19.2.18
 
-  use-sync-external-store@1.0.0(react@19.2.8):
-    dependencies:
-      react: 19.2.8
-
   use-sync-external-store@1.6.0(react@19.2.8):
     dependencies:
       react: 19.2.8
@@ -19148,13 +19127,11 @@ snapshots:
       spdx-correct: 3.2.0
       spdx-expression-parse: 3.0.1
 
-  valtio@1.6.0(@babel/helper-module-imports@7.25.9)(@babel/types@7.26.5)(react@19.2.8):
+  valtio@2.3.2(@types/react@19.2.18)(react@19.2.8):
     dependencies:
-      proxy-compare: 2.1.0
-      use-sync-external-store: 1.0.0(react@19.2.8)
+      proxy-compare: 3.0.1
     optionalDependencies:
-      '@babel/helper-module-imports': 7.25.9
-      '@babel/types': 7.26.5
+      '@types/react': 19.2.18
       react: 19.2.8
 
   value-or-function@3.0.0: {}
