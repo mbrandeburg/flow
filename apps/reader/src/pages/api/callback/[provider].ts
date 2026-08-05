@@ -1,7 +1,7 @@
 import type { NextApiRequest, NextApiResponse } from 'next'
 import nookies from 'nookies'
 
-import { mapToToken } from '@flow/reader/sync'
+import { mapToConnected, mapToToken } from '@flow/reader/sync'
 
 import { dbx } from '../utils'
 
@@ -24,9 +24,20 @@ export default async function handler(
   )
   const result = response.result as any
 
+  const maxAge = 365 * 24 * 60 * 60
+  // httpOnly so ePub-borne XSS in the render iframe cannot read the token.
   nookies.set({ res }, mapToToken['dropbox'], result.refresh_token, {
-    maxAge: 365 * 24 * 60 * 60,
+    maxAge,
+    httpOnly: true,
     secure: true,
+    sameSite: 'lax',
+    path: '/',
+  })
+  // Readable companion flag for the client UI (carries no secret).
+  nookies.set({ res }, mapToConnected['dropbox'], '1', {
+    maxAge,
+    secure: true,
+    sameSite: 'lax',
     path: '/',
   })
 

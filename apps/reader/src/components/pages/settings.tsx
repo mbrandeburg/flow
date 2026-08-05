@@ -1,7 +1,7 @@
 import { useEventListener } from '@literal-ui/hooks'
 import Dexie from 'dexie'
 import { useRouter } from 'next/router'
-import { parseCookies, destroyCookie } from 'nookies'
+import { parseCookies } from 'nookies'
 
 import {
   ColorScheme,
@@ -10,7 +10,7 @@ import {
   useTranslation,
 } from '@flow/reader/hooks'
 import { useSettings } from '@flow/reader/state'
-import { dbx, mapToToken, OAUTH_SUCCESS_MESSAGE } from '@flow/reader/sync'
+import { dbx, mapToConnected, OAUTH_SUCCESS_MESSAGE } from '@flow/reader/sync'
 
 import { localeNames } from '../../../locales'
 import { Button } from '../Button'
@@ -85,7 +85,7 @@ export const Settings: React.FC = () => {
 
 const Synchronization: React.FC = () => {
   const cookies = parseCookies()
-  const refreshToken = cookies[mapToToken['dropbox']]
+  const connected = cookies[mapToConnected['dropbox']]
   const render = useForceRender()
   const t = useTranslation('settings.synchronization')
 
@@ -102,12 +102,13 @@ const Synchronization: React.FC = () => {
         <option value="dropbox">Dropbox</option>
       </Select>
       <div className="mt-2">
-        {refreshToken ? (
+        {connected ? (
           <Button
             variant="secondary"
             onClick={() => {
-              destroyCookie(null, mapToToken['dropbox'])
-              render()
+              fetch('/api/logout/dropbox', { method: 'POST' }).then(() => {
+                render()
+              })
             }}
           >
             {t('unauthorize')}

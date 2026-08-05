@@ -10,6 +10,12 @@ export const mapToToken = {
   dropbox: 'dropbox-refresh-token',
 }
 
+// Non-sensitive companion to the httpOnly refresh-token cookie so the client can
+// tell an account is linked without being able to read the token itself.
+export const mapToConnected = {
+  dropbox: 'dropbox-connected',
+}
+
 export const OAUTH_SUCCESS_MESSAGE = 'oauth_success'
 
 export const dbx = new Dropbox({
@@ -19,8 +25,9 @@ export const dbx = new Dropbox({
 let _req: Promise<void> | undefined
 dbx.auth.refreshAccessToken = () => {
   const cookies = parseCookies()
-  const refreshToken = cookies[mapToToken['dropbox']]
-  if (!refreshToken) {
+  // The refresh token is httpOnly; gate on the readable companion flag instead.
+  const connected = cookies[mapToConnected['dropbox']]
+  if (!connected) {
     // `reject` to skip subsequent api requests
     return Promise.reject()
   }
