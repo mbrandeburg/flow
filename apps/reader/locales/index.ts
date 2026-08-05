@@ -1,7 +1,7 @@
+import de_DE from '../locales/de-DE'
 import en_US from '../locales/en-US'
 import ja_JP from '../locales/ja-JP'
 import zh_CN from '../locales/zh-CN'
-import de_DE from '../locales/de-DE'
 
 // Locale display names
 export const localeNames: Record<string, string> = {
@@ -11,7 +11,7 @@ export const localeNames: Record<string, string> = {
   'de-DE': 'Deutsch',
 }
 
-// eslint-disable-next-line import/no-anonymous-default-export
+ 
 export default {
   'en-US': en_US,
   'zh-CN': zh_CN,

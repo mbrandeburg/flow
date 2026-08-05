@@ -6,7 +6,7 @@
     "build": "next build --webpack",
     "analyze": "cross-env ANALYZE=true next build --webpack",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "eslint ."
   },
   "dependencies": {
     "@flow/epubjs": "workspace:*",
