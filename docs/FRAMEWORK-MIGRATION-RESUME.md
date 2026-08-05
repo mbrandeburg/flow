@@ -11,7 +11,7 @@ The **Flow ePub reader** fork (`mbrandeburg/flow`) is fully modernized to "2026"
 dependencies. Every major upgrade is **DONE, merged to `main`, CI-green, and
 runtime-verified**:
 
-- Tooling majors, **recoil → valtio**, **Node 18 → 20** base image
+- Tooling majors, **recoil → valtio**, **Node 18 → 20 → 26** base image
 - Reader: **Next 12 → 16**, **React 18 → 19**, **Serwist PWA**, **ESLint 9 flat config**
 - Reader: **Tailwind 3.4 → 4**
 - Website: **Next 12 → 16** (MDX 3, next-translate 3, shiki 4)
@@ -30,7 +30,7 @@ small deferred items in "Known caveats & deferred work" below.
   `@flow/monorepo` (root).
 - **Version pinning:** EXACT versions only (no `^`/`~`), like a fully-pinned requirements.txt.
 - **Host:** macOS, Node v26.6.0 (CANNOT build Next locally — use Docker). pnpm global at `/usr/local/bin/pnpm`.
-- **Production image:** `Dockerfile` (3 stages, builder/installer/runner). Now `node:20-alpine`.
+- **Production image:** `Dockerfile` (3 stages, builder/installer/runner). Now `node:26-alpine`.
 - **Deploy target:** k8s (manifests in `k8s/`). CI builds & pushes `ghcr.io/mbrandeburg/flow` (ARM64) via
   `.github/workflows/release.yml` on push to `main` / tags.
 - **Git remotes:** `origin` = https://github.com/mbrandeburg/flow.git (WRITABLE fork),
@@ -42,11 +42,12 @@ small deferred items in "Known caveats & deferred work" below.
 
 ## How we build & validate (host Node 26 can't build Next)
 
-The host runs Node 26, which can't run the Next build worker — **everything builds in
-Docker on `node:20-alpine`** (production-parity), reusing cached named volumes
-(`flow-store`, `flow-nm-*`) so only changed packages re-download.
+The host has no repo `node_modules` (they live in Docker volumes), so **everything builds in
+Docker on `node:26-alpine`** (production-parity linux/arm64), reusing cached named volumes
+(`flow-store`, `flow-nm-*`) so only changed packages re-download. (Next 16 builds fine on
+Node 26; the base image now tracks the host's Node 26.)
 
-**Reader build/lint** — `scripts/verify-node18.sh` (legacy name; uses node:20-alpine):
+**Reader build/lint** — `scripts/verify-node18.sh` (legacy filename; pins `node:26-alpine`):
 
 ```bash
 ./scripts/verify-node18.sh build   # pnpm install + reader build
@@ -68,7 +69,7 @@ docker run --rm -d --name flow-reader-dev -v "$PWD":/app -w /app \
   -v flow-nm-reader:/app/apps/reader/node_modules -v flow-nm-website:/app/apps/website/node_modules \
   -v flow-nm-internal:/app/packages/internal/node_modules -v flow-nm-tailwind:/app/packages/tailwind/node_modules \
   -v flow-nm-epubjs:/app/packages/epubjs/node_modules -p 7127:7127 \
-  node:20-alpine sh -c "corepack enable && corepack prepare pnpm@10.6.4 --activate && \
+  node:26-alpine sh -c "npm install -g pnpm@10.6.4 && \
     pnpm -F reader exec next dev --webpack -p 7127 -H 0.0.0.0"   # website: -F website, port 7117
 ```
 
@@ -88,7 +89,12 @@ gh run watch <run-id> --exit-status --interval 20
   CI (fresh container, clean install) is always authoritative.
 - **`next-env.d.ts` churn**: `next dev` rewrites paths to `.next/dev/types/`; the committed
   build variant uses `.next/types/`. Discard the dev-mode change (`git checkout -- **/next-env.d.ts`).
-- **Node 20 deprecation annotation** in CI runs is harmless (GitHub runner notice, not our code).
+- **Node 25+ removed corepack** — install pnpm with `npm install -g pnpm@10.6.4` (the Dockerfile
+  and `verify-node18.sh` do this; corepack is gone on node:26-alpine).
+- **Node 26 experimental `localStorage`**: build logs show `ExperimentalWarning: localStorage is
+  not available…` during static generation — benign (the app detects server/client via `window`,
+  not `localStorage`).
+- **Node deprecation annotation** in CI runs is harmless (GitHub runner notice, not our code).
 
 ---
 
@@ -118,7 +124,8 @@ node:18→20-alpine (`b6d8bf1`), plus dexie 4 / swr 2 / use-local-storage-state 
 `typescript-eslint` (via `eslint-config-next`) declares peer `typescript >=4.8.4 <6.1.0` and
 hard-refuses TS 7.0 — **no released version supports TS 7 yet** (tracked upstream:
 typescript-eslint#10940, needs TS 7.1+). Build/type-check/CI are unaffected (the Dockerfile
-runs `next build`, not lint). **When typescript-eslint ships TS 7 support, bump it and
+runs `next build`, not lint). `scripts/deps.sh verify` / `auto` run lint **non-fatally** so the
+monthly update flow isn't blocked. **When typescript-eslint ships TS 7 support, bump it and
 `pnpm lint` works again** — nothing else to change.
 
 ### valtio 2 ref brand (in `apps/reader/src/models/reader.ts`)
@@ -151,6 +158,7 @@ reader-only, zero-runtime dep). Remove if the package publishes a fixed `exports
 Version pinning is **EXACT** (no `^`/`~`), like a fully-pinned requirements.txt.
 
 ```
+node (Docker base)    26-alpine     (Node 25+ has no corepack; Dockerfile/verify use `npm i -g pnpm`)
 next                  16.3.0        (reader + website; engines.node >=20.9.0)
 react / react-dom     19.2.8
 @types/react          19.2.18
@@ -171,7 +179,8 @@ shiki                 4.4.2         (website, via rehype-pretty-code 0.14.5)
 pnpm                  10.6.4        turbo 2.10.8
 ```
 
-Host: macOS, **Node v26.6.0 (cannot build Next locally — use Docker)**.
+Host: macOS, **Node v26.6.0** (same major as the Docker base). Build in Docker for
+production-parity linux/arm64 + node_modules isolated from the host (which has no repo install).
 Git remotes: `origin` = writable fork `mbrandeburg/flow`; `upstream` = pull-only `pacexy/flow`.
 
 ---
