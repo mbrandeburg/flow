@@ -1,23 +1,25 @@
-# Framework Migration — Resume Notes
+# Flow Modernization — Resume Notes
 
-**Last updated:** 2026-08-04
-**Branch with WIP:** `framework-migration` (based on `main`)
-**Deployable branch:** `main` (untouched by the risky migration)
+**Last updated:** 2026-08-05
+**Working branch:** `main` (all migrations merged; `main` is green + deployable)
 
 ---
 
 ## TL;DR — where we are
 
-We are modernizing the **Flow ePub reader** fork (`mbrandeburg/flow`) to "2026" dependencies.
-Tooling majors, the recoil→valtio migration, and the **Node 18 → Node 20 base image**
-bump are **DONE, committed, and pushed to `main`**. The big **Next 12 → 16 / React 18 → 19**
-framework migration is **in progress on the `framework-migration` branch** — all the
-package.json + config edits are made and **committed**, but the migration **has not been
-installed/built successfully yet** because the machine ran out of disk (`ERR_PNPM_ENOSPC`)
-mid-install.
+The **Flow ePub reader** fork (`mbrandeburg/flow`) is fully modernized to "2026"
+dependencies. Every major upgrade is **DONE, merged to `main`, CI-green, and
+runtime-verified**:
 
-**Next action after reboot:** with freed disk, run the Next 16 build (see
-"How to resume" below), then fix the type errors that surface.
+- Tooling majors, **recoil → valtio**, **Node 18 → 20** base image
+- Reader: **Next 12 → 16**, **React 18 → 19**, **Serwist PWA**, **ESLint 9 flat config**
+- Reader: **Tailwind 3.4 → 4**
+- Website: **Next 12 → 16** (MDX 3, next-translate 3, shiki 4)
+- **TypeScript 5.9 → 7.0.2** (native/Go compiler)
+- **valtio 1 → 2**
+
+There is **no migration in progress**. Next work = normal product updates or the
+small deferred items in "Known caveats & deferred work" below.
 
 ---
 
@@ -33,186 +35,158 @@ mid-install.
   `.github/workflows/release.yml` on push to `main` / tags.
 - **Git remotes:** `origin` = https://github.com/mbrandeburg/flow.git (WRITABLE fork),
   `upstream` = https://github.com/pacexy/flow.git (PULL ONLY). `remote.pushDefault=origin`.
-- **Overriding constraint:** *don't break the working k8s deployment.* That's why the framework
-  migration lives on a branch and `main` stays green.
+- **Overriding constraint:** *don't break the working k8s deployment.* Do risky changes on a
+  branch, validate via CI dispatch, then merge to `main` so `main` stays green + deployable.
 
 ---
 
-## The Docker build loop (how we validate — host Node 26 can't build)
+## How we build & validate (host Node 26 can't build Next)
 
-Script: `scripts/verify-node18.sh` (name is legacy; it now uses **node:20-alpine**).
-It builds the reader inside Docker with cached named volumes (`flow-store`, `flow-nm-*`) so
-only changed packages re-download.
+The host runs Node 26, which can't run the Next build worker — **everything builds in
+Docker on `node:20-alpine`** (production-parity), reusing cached named volumes
+(`flow-store`, `flow-nm-*`) so only changed packages re-download.
+
+**Reader build/lint** — `scripts/verify-node18.sh` (legacy name; uses node:20-alpine):
 
 ```bash
-./scripts/verify-node18.sh build   # pnpm install + reader build (default)
-./scripts/verify-node18.sh lint    # pnpm install + reader lint
+./scripts/verify-node18.sh build   # pnpm install + reader build
+./scripts/verify-node18.sh lint    # pnpm install + reader lint (see TS7 caveat below)
 ./scripts/verify-node18.sh clean   # remove the flow-* cached volumes (~2GB)
 ```
 
-A green build reaches `Compiled successfully` + `Generating static pages (25/25)`.
+**Website / arbitrary builds** — run a one-off container with the same volumes, e.g.
+`pnpm -F website build` or `pnpm -F reader build`. Reader green = `Compiled successfully`
++ `Generating static pages (20/20)`; website green = `18/18` (MDX pages are `● SSG`).
+
+**Dev server (for runtime checks)** — the host has no `node_modules` (they live in the
+Docker volumes), so run dev in Docker with a port map, bind `0.0.0.0`, and pass `--webpack`
+(both apps have a `webpack` config, so Turbopack errors without it):
+
+```bash
+docker run --rm -d --name flow-reader-dev -v "$PWD":/app -w /app \
+  -v flow-store:/root/.local/share/pnpm/store -v flow-nm-root:/app/node_modules \
+  -v flow-nm-reader:/app/apps/reader/node_modules -v flow-nm-website:/app/apps/website/node_modules \
+  -v flow-nm-internal:/app/packages/internal/node_modules -v flow-nm-tailwind:/app/packages/tailwind/node_modules \
+  -v flow-nm-epubjs:/app/packages/epubjs/node_modules -p 7127:7127 \
+  node:20-alpine sh -c "corepack enable && corepack prepare pnpm@10.6.4 --activate && \
+    pnpm -F reader exec next dev --webpack -p 7127 -H 0.0.0.0"   # website: -F website, port 7117
+```
+
+**CI validation of a branch (without touching deployables)** — CI (`release.yml`) only
+triggers on push to `main`/tags, so validate a branch with a manual dispatch:
+
+```bash
+gh repo set-default mbrandeburg/flow            # once (repo has 2 remotes)
+gh workflow run release.yml --ref <branch>      # tags image <branch> / <branch>-<sha>; NOT latest
+gh run watch <run-id> --exit-status --interval 20
+```
+
+### ⚠️ Gotchas
+- **Stale `tsconfig.tsbuildinfo`**: because the repo is mounted into the build container,
+  incremental type-check can report **stale errors** after cross-file type changes. If local
+  results look wrong, `rm -rf apps/reader/.next apps/reader/tsconfig.tsbuildinfo` and rebuild.
+  CI (fresh container, clean install) is always authoritative.
+- **`next-env.d.ts` churn**: `next dev` rewrites paths to `.next/dev/types/`; the committed
+  build variant uses `.next/types/`. Discard the dev-mode change (`git checkout -- **/next-env.d.ts`).
+- **Node 20 deprecation annotation** in CI runs is harmless (GitHub runner notice, not our code).
 
 ---
 
-## DONE + committed + pushed to `main`
+## What's on `main` now (merge history)
 
-| Commit | What |
+| Merge / commit | What |
 |--------|------|
-| `a53bd48` | Tooling majors: prettier 3.9.6, turbo 2.10.8 (turbo.json `pipeline`→`tasks`), husky 9.1.7, lint-staged 17.3.0, rollup 4, tsup 8, esno 4, eslint-config-prettier 10. Build green. |
-| `d772bab` | **Removed recoil** (React 19 blocker) → valtio atoms. New `apps/reader/src/atom.ts` (`atom()`/`persistedAtom()`). Rewrote `state.ts`, `useAction.ts`, `useMobile.ts`, `useTheme.ts`, `_app.tsx`, `Layout.tsx`, `Reader.tsx`, `.eslintrc.js`. Build green, −24kB. Runtime-validated on Node 18 dev. |
-| `b6d8bf1` | **Base image node:18 → node:20-alpine** (all 3 Dockerfile stages + `verify-node18.sh`). Required for Next 16 (`engines.node >=20.9`). Current Next 12 stack builds green on Node 20. |
+| `866574b` | **Reader: Next 12→16 + React 18→19 + Serwist PWA + ESLint 9** flat config. Recoil→valtio, `@types/react` 19 fixes, react-icons 5, `tilg` removed (React 19 crash), next-pwa→`@serwist/next`, `next lint`→ESLint CLI. |
+| `3a480e0` | **Reader: Tailwind 3.4 → 4.** `@tailwindcss/postcss` (dropped autoprefixer), `styles.css` `@import 'tailwindcss'` + `@config`, preset `colors.js` reworked from the removed `({opacityValue})=>` closure to `<alpha-value>`, dropped unused `@tailwindcss/aspect-ratio` + `container` block. |
+| `2081ce8` | **Website: Next 12→16 + React 18→19** (MDX 3, next-translate 3 via `next-translate-plugin`, shiki 4). `next-transpile-modules`→`transpilePackages`, build/dev use `--webpack`. |
+| `ef0a994` | **TypeScript 5.9.3 → 7.0.2** (native compiler). Root tsconfig: removed `baseUrl`, `moduleResolution` node→bundler, relative `paths`. |
+| `8bc86f3` | **valtio 1.6.0 → 2.3.2.** New ref-brand handling in `models/reader.ts` (see caveats). |
 
-Earlier pushed commits: `cc8a2ea` (merge upstream), `2ac0417`, `ba15c97`, `35b85e5`, `a04d6e1`,
-plus dexie 3→4, swr 2, use-local-storage-state 20, type-fest 5 (all validated).
+Earlier base work (also on `main`): tooling majors (`a53bd48`), recoil→valtio (`d772bab`),
+node:18→20-alpine (`b6d8bf1`), plus dexie 4 / swr 2 / use-local-storage-state 20 / type-fest 5.
 
-### ⚠️ CI is currently RED on `main` but the BUILD SUCCEEDS
-The `b6d8bf1` CI run **built and pushed the image successfully**
-(`ghcr.io/mbrandeburg/flow:main-b6d8bf1` exists and is deployable). It only failed on the
-**last** step, `actions/attest-build-provenance@v1`:
+**Deploy:** k8s (`k8s/`). CI (`release.yml`) builds & pushes `ghcr.io/mbrandeburg/flow`
+(linux/arm64, Raspberry Pi) on push to `main`/tags. The Dockerfile builds **only the reader**
+(`pnpm -F reader build`) — **no lint step**. The **website deploys separately via Netlify**
+(`apps/website/netlify.toml`).
+
+---
+
+## Known caveats & deferred work
+
+### ⚠️ `pnpm lint` is broken under TypeScript 7
+`typescript-eslint` (via `eslint-config-next`) declares peer `typescript >=4.8.4 <6.1.0` and
+hard-refuses TS 7.0 — **no released version supports TS 7 yet** (tracked upstream:
+typescript-eslint#10940, needs TS 7.1+). Build/type-check/CI are unaffected (the Dockerfile
+runs `next build`, not lint). **When typescript-eslint ships TS 7 support, bump it and
+`pnpm lint` works again** — nothing else to change.
+
+### valtio 2 ref brand (in `apps/reader/src/models/reader.ts`)
+valtio 2 renamed the snapshot ref brand `$$valtioRef` → `$$valtioSnapshot`
+(`ref<T>(o): T & { $$valtioSnapshot: T }`; `Snapshot<T>` unwraps it, else `DeepReadonly`).
+We replaced `AsRef` with `type Ref<T> = T & { $$valtioSnapshot: T }` and brand **only** the
+ref'd fields whose snapshots are used mutably / are excessively deep: `iframe` (Window),
+`rendition` (`RenditionWithManager`, assigned via `ref<RenditionWithManager>()`), and
+`annotationRange` (Range). **Do NOT brand `section`/`sections`/`epub`/`_el`** — the brand
+leaks into method default-param types (e.g. `searchInSection`) and breaks the build.
+
+### `react-polymorphic-types` + bundler resolution
+`react-polymorphic-types@2.0.0` has an `exports` map **without a `types` condition**, so TS 7's
+`bundler`/`node16` resolution can't find its `index.d.ts`. Worked around with a `paths` entry in
+root `tsconfig.json` → `./apps/reader/node_modules/react-polymorphic-types/index.d.ts` (it's a
+reader-only, zero-runtime dep). Remove if the package publishes a fixed `exports`.
+
+### Deferred (low value)
+- **`packages/epubjs` tooling**: webpack 4→5, babel 7→8, karma, mocha, jsdoc, documentation.
+  Not in the app build path (consumed as source via `transpilePackages`; built with babel, not tsc).
+  Its `types/tsconfig.json` still uses `baseUrl` (would need updating if type-checked under TS 7).
+- **TypeScript 7.1** (`next` dist-tag) once stable + typescript-eslint support lands.
+- **Sentry**: `@sentry/nextjs@10` is a dep so `_app.tsx`/`_error.js` compile, but init is not wired
+  (`instrumentation.ts` / `instrumentation-client.ts`) — no telemetry until that's added.
+
+---
+
+## Current pinned versions (on `main`, as of 2026-08-05)
+
+Version pinning is **EXACT** (no `^`/`~`), like a fully-pinned requirements.txt.
 
 ```
-Error: Failed to get ID token: Unable to get ACTIONS_ID_TOKEN_REQUEST_URL env variable
+next                  16.3.0        (reader + website; engines.node >=20.9.0)
+react / react-dom     19.2.8
+@types/react          19.2.18
+@types/react-dom      19.2.4
+@types/node (v20)     20.19.43
+typescript            7.0.2         (native compiler; breaks pnpm lint — see caveats)
+tailwindcss           4.3.3         (reader + packages/tailwind; website still on 3.2.0)
+@tailwindcss/postcss  4.3.3
+valtio                2.3.2
+@sentry/nextjs        10.69.0
+@serwist/next         9.5.12        (PWA; serwist 9.5.12)
+react-icons           5.7.0
+eslint                9.39.5        (flat config)
+eslint-config-next    16.3.0
+@mdx-js/loader/react  3.1.1         (website)
+next-translate(+plugin) 3.2.0       (website)
+shiki                 4.4.2         (website, via rehype-pretty-code 0.14.5)
+pnpm                  10.6.4        turbo 2.10.8
 ```
 
-**Cause:** the job `permissions:` block lacks `id-token: write` (and `attestations: write`).
-**Fix (applied on `main` — see commit after this doc):** add those two permissions to
-`.github/workflows/release.yml`.
+Host: macOS, **Node v26.6.0 (cannot build Next locally — use Docker)**.
+Git remotes: `origin` = writable fork `mbrandeburg/flow`; `upstream` = pull-only `pacexy/flow`.
 
 ---
 
-## IN PROGRESS — `framework-migration` branch (committed, NOT yet built)
+## Docker / disk notes
 
-Strategy: get a **Next 16 + React 19 CORE build artifact first** (defer PWA + Sentry config,
-temporarily relax the type/lint gates), prove the infra works, then fix types on cheap rebuilds.
-
-### Edits already made & committed on the branch
-
-**`apps/reader/package.json`**
-- `next` 12.3.4 → **16.3.0**
-- `@next/bundle-analyzer` 12.1.6 → **16.3.0**
-- `@sentry/nextjs` 7.12.1 → **10.69.0**
-- `react` / `react-dom` 18.0.0 → **19.2.8**
-- `react-icons` 4.3.1 → **5.7.0**
-- `@types/node` 17.0.22 → **20.19.43**
-- `@types/react` 17.0.43 → **19.2.18**
-- **added** `@types/react-dom` **19.2.4**
-- `tailwindcss` 3.2.0 → **3.4.19** (stayed on v3 — Tailwind 4 is a separate branch)
-- **removed** `next-pwa`, `next-transpile-modules`, `@tailwindcss/line-clamp`
-- `engines.node` → `>=20.9.0`
-
-**`apps/reader/tailwind.config.js`** — dropped `@tailwindcss/line-clamp` plugin (built into TW 3.4).
-
-**`apps/reader/next.config.js`** — REWRITTEN for Next 16:
-- `withBundleAnalyzer` only (dropped `withSentryConfig` + `withPWA` wrappers)
-- `transpilePackages: ['@flow/internal','@flow/epubjs','@material/material-color-utilities']`
-  (replaces the removed `next-transpile-modules`)
-- kept `i18n` (Pages Router still supports it)
-- `output: 'standalone'` + `outputFileTracingRoot` moved to **top-level** (out of `experimental`)
-- **TEMPORARY gates:** `eslint.ignoreDuringBuilds: true` + `typescript.ignoreBuildErrors: true`
-  (marked with `TODO(framework-migration)` — MUST be removed after types are fixed)
-
-**`packages/tailwind/package.json`** — `tailwindcss` 3.2.0 → **3.4.19**.
-
-**`package.json` (root)** — `typescript` 4.6.3 → **5.9.3** (kept TS on 5.x; TS 7.0.2 is a later
-follow-up), `engines.node` → `>=20.9.0`. ESLint stack LEFT at eslint 8 / eslint-config-next 12
-(deferred; build ignores ESLint via the temp gate).
-
-**Sentry handling:** we KEPT `@sentry/nextjs@10` as a dep so `_app.tsx` (`ErrorBoundary`) and
-`_error.js` (`captureUnderscoreErrorException`) keep importing/compiling. Without init there is no
-telemetry, but the build passes. **VERIFY** `captureUnderscoreErrorException` still exists in v10 —
-if removed, `_error.js` needs an edit (it's `.js`, not type-checked, so only a runtime concern).
-
-### Why it hasn't built yet
-`./scripts/verify-node18.sh build` was started but the host disk hit **`ERR_PNPM_ENOSPC`**
-mid-download of the Next 16 / Sentry 10 / sharp packages. The install never finished, so
-**`pnpm-lock.yaml` is unchanged** (still the old resolution). No corruption.
+The `flow-*` volumes cache node_modules + the pnpm store (~2GB). If disk gets tight,
+`./scripts/verify-node18.sh clean` removes them (re-populated on the next build).
+`docker builder prune -f` + `docker system prune -f` are safe. **Do NOT run
+`docker system prune -a`** or remove `gcr.io/k8s-minikube/kicbase` (~1.37GB) — that's
+minikube's base image and removing it breaks the user's local cluster.
 
 ---
 
-## How to resume (after reboot / disk freed)
+## Memory
+Repo-scoped facts (build workflow, CI, migration status) are stored in agent memory at
+`/memories/repo/flow-build-and-deps.md`.
 
-1. **Check disk:** `df -h /System/Volumes/Data` — need comfortably more than ~1.5GB free for the
-   Next 16 install (Next + Sentry 10 + sharp + react-icons 5 pull a lot).
-2. **Get on the branch:** `git checkout framework-migration` (WIP is already committed here).
-3. **Run the build:** `./scripts/verify-node18.sh build`
-   - This will `pnpm install` (updates `pnpm-lock.yaml` to Next 16 resolution) then `next build`.
-   - Next 16 defaults to **Turbopack**. There is **no custom Babel config**, so SWC/Turbopack
-     should work. If Turbopack chokes on `standalone`/Pages Router, force webpack:
-     `next build --webpack` (edit the reader `build` script temporarily).
-4. **Expect it to compile** (types are ignored via the temp gate). Confirm `Compiled successfully`
-   + `25/25` pages. Commit this as the first green Next 16 artifact.
-5. **Then turn the gates back on** — remove `typescript.ignoreBuildErrors` and fix the type errors:
-
-### Known type errors to fix (from prior analysis)
-- **`@types/react` 19 breaks `React.FC` implicit children** — ~28 sites need `PropsWithChildren`
-  (or explicit `children`). Files:
-  `models/reader.ts`, `Tab`, `Reader`, `Layout`, `Row`, `Annotation`, `AnnotationView`,
-  `ImageView`, `TimelineView`, `SearchView`, `TocView`, `TypographyView`, `ThemeView`,
-  `TextSelectionMenu`, `Button`, `Page`, `settings`, `DropZone`, `SplitView`, `ActionBar`,
-  `GridView`, `Form`, `index`, `_app` (+ website: `MDX`, `Seo`, `Layout`, `index`).
-- **`react-icons` 5** returns `ReactNode` from `IconType`; fine with `@types/react` 19 (was the
-  blocker on 18). Confirm no residual JSX-element errors.
-- **valtio:** we kept **1.6.0** (works with React 19). Do NOT bump to valtio 2 here — v2's snapshot
-  drops the hand-rolled `AsRef` brand (`models/reader.ts:77`), making every `ref()`'d object
-  (iframe/rendition/book/…) `DeepReadonly` → mutation errors at `Reader.tsx:353` etc. Separate effort.
-
-### Then re-enable the deferred pieces (each can be its own commit)
-- **ESLint flat config:** eslint 8→10, eslint-config-next 12→16, `@typescript-eslint/*` 5→8.
-  NOTE: `next lint` is **REMOVED in Next 16** — migrate the reader `lint` script to the ESLint CLI
-  with a flat `eslint.config.js`. Then remove `eslint.ignoreDuringBuilds`.
-  Also delete/replace the stale `apps/reader/.eslintrc.js` (CI logged
-  `Failed to load config "../../.eslintrc.js"`).
-- **Sentry v10 properly:** `withSentryConfig(nextConfig, options)` single-options signature +
-  `instrumentation.ts` / `instrumentation-client.ts` (init moved out of
-  `sentry.server.config.js` / `sentry.client.config.js`). Re-add the wrapper in `next.config.js`.
-- **PWA:** swap `next-pwa` → `@ducanh2912/next-pwa` (10.2.9, peer `next>=14`) or `@serwist/next`.
-  ⚠️ Both are **webpack**-based; under Next 16 Turbopack the SW hook may be ignored — verify, or
-  build the reader with `--webpack` when PWA is required.
-- **TypeScript 7.0.2** (the native/Go compiler) — bump after 5.9.3 is green.
-- **Tailwind 3 → 4** — SEPARATE branch. Big CSS-first rewrite: `postcss.config.js` →
-  `@tailwindcss/postcss`, drop `autoprefixer`, `styles.css` `@tailwind` → `@import "tailwindcss"`,
-  `darkMode`, and the custom `packages/tailwind` preset (colors.js uses the old
-  `({ opacityValue }) => …` closure-color signature that v4 removed → rework to `<alpha-value>`).
-
-### Deferred (low k8s value)
-- `apps/website`: next 12→16, @mdx-js 2→3, shiki 0.10→4, next-translate 1→3 (needs next13+).
-- `packages/epubjs` tooling: webpack 4→5, babel 7→8, karma, mocha, jsdoc, documentation.
-
----
-
-## Confirmed latest versions (as of 2026-08-04)
-
-```
-next                 16.3.0   (engines.node >=20.9.0)
-react / react-dom    19.2.8
-@types/react         19.2.18
-@types/react-dom     19.2.4
-@types/node (v20)    20.19.43
-@sentry/nextjs       10.69.0
-@next/bundle-analyzer 16.3.0
-react-icons          5.7.0
-tailwindcss (v3)     3.4.19
-typescript           7.0.2   (using 5.9.3 for now)
-@ducanh2912/next-pwa 10.2.9  (peer next>=14, webpack>=5.9)
-eslint-config-next   16.3.0
-```
-
----
-
-## Disk & cleanup (done this session before reboot)
-
-Host `/System/Volumes/Data` was ~100% full (~1.1GB free when we stopped). To reclaim space we ran:
-- `./scripts/verify-node18.sh clean` — removed `flow-store` + `flow-nm-*` volumes (~2GB, incl. the
-  partial Next 16 download).
-- `docker rmi node:18-alpine node:20-alpine` — re-pullable (~50MB each).
-- `docker builder prune -f` + `docker system prune -f` (**NOT** `-a`).
-
-**DO NOT REMOVE** `gcr.io/k8s-minikube/kicbase` (~1.37GB) — it's minikube's base image; removing it
-breaks the user's local cluster. That's why we avoided `docker system prune -a`.
-
-After reboot, `verify-node18.sh build` re-pulls node:20-alpine and re-populates the volumes on first run.
-
----
-
-## Session memory
-Full running notes live at `/memories/session/deps-catchup.md` (SESSION 3 section mirrors this).
