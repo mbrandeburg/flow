@@ -1,55 +1,44 @@
 # Flow Modernization — Resume Notes
 
 **Last updated:** 2026-08-05
-**Working branch:** `docker-hygiene-pnpm11` (WIP — see "RESUME HERE"). `main` is green + deployable.
+**Working branch:** none — all work merged to `main` (green, CI-verified, deployed). No migration in progress.
 
 ---
 
-## ⏸ RESUME HERE — pnpm 11 supply-chain gates fixed; only CI + merge left (2026-08-05)
+## ✅ pnpm 11 + Dockerfile hygiene + dep cleanup — DONE & merged (2026-08-05)
 
-The post-crash WIP is now **build-validated under pnpm 11** and pushed to
-`origin/docker-hygiene-pnpm11` (`fe9e356`). STEP 0 (disk cleanup) and the two new pnpm 11
-blockers are DONE. **Only CI validation + merge to `main` remain.**
+Two branches shipped to `main` after the disk-full crash, both CI-green (native arm64) and deployed:
 
-**What the branch now contains** (all committed + pushed):
-- **Dockerfile hygiene** (`5f5750c`): `CMD ["node","apps/reader/server.js"]` (JSON form → clean
-  SIGTERM in k8s), `ENV KEY=value` form, `turbo prune @flow/reader` (positional; `--scope` gone).
-- **pnpm 10.6.4 → 11.20.0** (`5f5750c`): `packageManager` in `package.json`, both
-  `npm install -g pnpm@11.20.0` lines in `Dockerfile`, `PNPM_VER` in `verify-node18.sh`.
-- **pnpm 11 supply-chain config** (`fe9e356`, in `pnpm-workspace.yaml`) — see next section.
+- **`docker-hygiene-pnpm11`** (merge `58ca882`): Dockerfile hygiene + **pnpm 10.6.4 → 11.20.0** +
+  the pnpm 11 supply-chain config in `pnpm-workspace.yaml`.
+- **`deps-2026-types-cleanup`** (merge `33ae731`): dropped unused `babel-loader` (reader + website;
+  Next uses SWC, no babel config) and deprecated `@types/uuid` (`uuid@14` self-types); `@types/node`
+  20.19.43 → **26.1.2** (align with Node 26 runtime); `@flow/internal` `@types/react` 17→**19.2.18** /
+  `@types/react-dom` 18→**19.2.4** (was skewed vs the React 19 reader). Both branches deleted post-merge.
 
-**Two NEW pnpm 11 blockers hit on resume (NOT present at crash time), both fixed:**
-1. **`minimumReleaseAge` cooldown** — pnpm 11 defaults it to `1440` min (1 day) and REFUSES to
-   install versions younger than that. `shiki`/`@shikijs/*@4.4.2` (website highlighter, published
-   same day) were rejected. Fix: kept the cooldown, added `minimumReleaseAgeExclude: [shiki, '@shikijs/*']`.
-2. **`ERR_PNPM_IGNORED_BUILDS` is now FATAL** (pnpm 10 only warned) — `pnpm i --frozen-lockfile`
-   exits 1 on any unreviewed dep build script, which also cascades into `pnpm -F reader build`
-   (its `verifyDepsBeforeRun` runs install first). pnpm 11 **removed `ignoredBuiltDependencies`**;
-   the replacement is the `allowBuilds` map. Fix: `allowBuilds:` with `@sentry/cli, core-js,
-   es5-ext, esbuild, next-translate-plugin, phantomjs-prebuilt, unrs-resolver` all set to `false`
-   (none are needed by the Next/SWC builds — release/test/lint-only; mirrors main's behavior).
-   NOTE: a failed install auto-injects a placeholder `allowBuilds` block at the top of
-   `pnpm-workspace.yaml` ("set this to true or false") → "duplicated mapping key"; delete it.
+### ⚠️ pnpm 11 gotchas (keep — these bit us and will recur on the monthly update flow)
+Config lives in **`pnpm-workspace.yaml`** (pnpm 11 reads settings there, NOT `.npmrc` — only auth/registry).
+1. **`minimumReleaseAge` cooldown**: pnpm 11 defaults it to `1440` min (1 day) and REFUSES to install
+   versions younger than that — frozen lockfile included. Fresh pins (e.g. `shiki`/`@shikijs/*` published
+   same day) get rejected. Fix in place: kept the cooldown + `minimumReleaseAgeExclude: [shiki, '@shikijs/*']`.
+   **On future bumps to a same-day release, add it to that exclude list.**
+2. **`ERR_PNPM_IGNORED_BUILDS` is now FATAL** (pnpm 10 only warned) — `pnpm i --frozen-lockfile` exits 1
+   on any unreviewed dep build script, and it cascades into `pnpm -F reader build` (its `verifyDepsBeforeRun`
+   runs install first). pnpm 11 **removed `ignoredBuiltDependencies`/`onlyBuiltDependencies`**; the replacement
+   is the **`allowBuilds:` map** (`pkg: true|false`). In place: all 7 script-bearing deps set to `false`
+   (`@sentry/cli, core-js, es5-ext, esbuild, next-translate-plugin, phantomjs-prebuilt, unrs-resolver`) — none
+   needed by the SWC builds. NOTE: a *failed* install auto-injects a placeholder `allowBuilds` block at the TOP
+   of `pnpm-workspace.yaml` ("set this to true or false") → "duplicated mapping key"; just delete the placeholder.
+3. **The pnpm-10 lockfile did NOT need regenerating** — pnpm 11 accepts `9.0` as-is. The real blockers were 1 & 2.
+4. **Host disk sink — `.pnpm-store`**: pnpm 11 writes its store to `<repo>/.pnpm-store` (gitignored) despite the
+   `flow-store` volume mount — it reached **2.7 GB** (same disk-full vector as the crash). `rm -rf .pnpm-store`
+   after Docker builds (regenerable). Keep only `flow-store` + one `flow-nm*` volume set. **Never**
+   `docker system prune -a` or remove `gcr.io/k8s-minikube/kicbase`.
 
-**The lockfile did NOT need regenerating** — pnpm 11 accepts the existing `9.0` lockfile as-is
-("Lockfile is up to date"). The crash-time worry about `--frozen-lockfile` rejecting it was unfounded;
-the real blockers were the two supply-chain gates above. `pnpm-lock.yaml` is unchanged.
-
-**Verified green** (node:26-alpine, flow-nm11 volumes): `pnpm i --frozen-lockfile` exit 0,
-reader `✓ Compiled successfully`, website `✓ Compiled successfully`.
-
-**To finish:**
-```bash
-git checkout docker-hygiene-pnpm11
-gh workflow run release.yml --ref docker-hygiene-pnpm11   # arm64 CI; tags branch image, NOT latest
-gh run watch <run-id> --exit-status --interval 20         # then merge to main when green
-```
-
-**⚠️ Host disk sink — `.pnpm-store`:** pnpm 11 writes its store to `<repo>/.pnpm-store` (gitignored)
-despite the `flow-store` volume mount — it hit **2.7 GB** (`v10` + `v11`) and is the same disk-full
-vector as the original crash. `rm -rf .pnpm-store` after builds (regenerable). Consider pinning
-`storeDir` to the mounted volume if this keeps recurring. Also keep only `flow-store` + one
-`flow-nm*` volume set. **Never** `docker system prune -a` or remove `gcr.io/k8s-minikube/kicbase`.
+### Optional cleanup (not done — needs your ok)
+Six stale *merged* feature branches still exist locally + on origin: `framework-migration`, `node-26-base`,
+`tailwind-4-migration`, `typescript-7-upgrade`, `valtio-2-upgrade`, `website-next16-migration`. Safe to delete
+(`git branch -d <b>` + `git push origin --delete <b>`) since they're all in `main`.
 
 ---
 
@@ -73,7 +62,7 @@ small deferred items in "Known caveats & deferred work" below.
 
 ## Repo facts (quick reference)
 
-- **Monorepo:** pnpm 10.6.4 + Turborepo. Workspaces: `@flow/reader` (Next.js reader, port 7127),
+- **Monorepo:** pnpm 11.20.0 + Turborepo. Workspaces: `@flow/reader` (Next.js reader, port 7127),
   `@flow/website` (7117), `@flow/epubjs` (vendored engine), `@flow/internal`, `@flow/tailwind`,
   `@flow/monorepo` (root).
 - **Version pinning:** EXACT versions only (no `^`/`~`), like a fully-pinned requirements.txt.
@@ -117,7 +106,7 @@ docker run --rm -d --name flow-reader-dev -v "$PWD":/app -w /app \
   -v flow-nm-reader:/app/apps/reader/node_modules -v flow-nm-website:/app/apps/website/node_modules \
   -v flow-nm-internal:/app/packages/internal/node_modules -v flow-nm-tailwind:/app/packages/tailwind/node_modules \
   -v flow-nm-epubjs:/app/packages/epubjs/node_modules -p 7127:7127 \
-  node:26-alpine sh -c "npm install -g pnpm@10.6.4 && \
+  node:26-alpine sh -c "npm install -g pnpm@11.20.0 && \
     pnpm -F reader exec next dev --webpack -p 7127 -H 0.0.0.0"   # website: -F website, port 7117
 ```
 
@@ -137,7 +126,7 @@ gh run watch <run-id> --exit-status --interval 20
   CI (fresh container, clean install) is always authoritative.
 - **`next-env.d.ts` churn**: `next dev` rewrites paths to `.next/dev/types/`; the committed
   build variant uses `.next/types/`. Discard the dev-mode change (`git checkout -- **/next-env.d.ts`).
-- **Node 25+ removed corepack** — install pnpm with `npm install -g pnpm@10.6.4` (the Dockerfile
+- **Node 25+ removed corepack** — install pnpm with `npm install -g pnpm@11.20.0` (the Dockerfile
   and `verify-node18.sh` do this; corepack is gone on node:26-alpine).
 - **Node 26 experimental `localStorage`**: build logs show `ExperimentalWarning: localStorage is
   not available…` during static generation — benign (the app detects server/client via `window`,
@@ -161,6 +150,8 @@ gh run watch <run-id> --exit-status --interval 20
 | `ef0a994` | **TypeScript 5.9.3 → 7.0.2** (native compiler). Root tsconfig: removed `baseUrl`, `moduleResolution` node→bundler, relative `paths`. |
 | `8bc86f3` | **valtio 1.6.0 → 2.3.2.** New ref-brand handling in `models/reader.ts` (see caveats). |
 | `1e4835f` | **Base image node:20 → node:26-alpine** (corepack gone in Node 25+ → `npm i -g pnpm`). **CI now runs on a native arm64 runner** (`ubuntu-24.04-arm`) instead of QEMU, and GitHub Actions bumped to latest majors. |
+| `58ca882` | **pnpm 10.6.4 → 11.20.0 + Dockerfile hygiene.** JSON-form `CMD`, `ENV KEY=value`, `turbo prune` positional. pnpm 11 supply-chain config in `pnpm-workspace.yaml`: `minimumReleaseAge` cooldown + `shiki` exclude, `allowBuilds` (replaces removed `ignoredBuiltDependencies`). Lockfile `9.0` unchanged. |
+| `33ae731` | **Dep cleanup.** Dropped unused `babel-loader` (reader + website) + deprecated `@types/uuid`; `@types/node` 20→26.1.2; `@flow/internal` `@types/react` 17→19 / `@types/react-dom` 18→19. |
 
 Earlier base work (also on `main`): tooling majors (`a53bd48`), recoil→valtio (`d772bab`),
 node:18→20-alpine (`b6d8bf1`), plus dexie 4 / swr 2 / use-local-storage-state 20 / type-fest 5.
@@ -215,9 +206,9 @@ Version pinning is **EXACT** (no `^`/`~`), like a fully-pinned requirements.txt.
 node (Docker base)    26-alpine     (Node 25+ has no corepack; Dockerfile/verify use `npm i -g pnpm`)
 next                  16.3.0        (reader + website; engines.node >=20.9.0)
 react / react-dom     19.2.8
-@types/react          19.2.18
-@types/react-dom      19.2.4
-@types/node (v20)     20.19.43
+@types/react          19.2.18       (reader/website/internal — internal was 17, now aligned)
+@types/react-dom      19.2.4        (internal was 18, now aligned)
+@types/node           26.1.2        (aligned with the Node 26 runtime)
 typescript            7.0.2         (native compiler; breaks pnpm lint — see caveats)
 tailwindcss           4.3.3         (reader + packages/tailwind; website still on 3.2.0)
 @tailwindcss/postcss  4.3.3
@@ -230,8 +221,11 @@ eslint-config-next    16.3.0
 @mdx-js/loader/react  3.1.1         (website)
 next-translate(+plugin) 3.2.0       (website)
 shiki                 4.4.2         (website, via rehype-pretty-code 0.14.5)
-pnpm                  10.6.4        turbo 2.10.8
+pnpm                  11.20.0       turbo 2.10.8  (supply-chain gates configured in pnpm-workspace.yaml)
 ```
+
+Removed as unused/deprecated: `babel-loader` (reader + website; Next uses SWC), `@types/uuid`
+(`uuid@14` ships its own types).
 
 Host: macOS, **Node v26.6.0** (same major as the Docker base). Build in Docker for
 production-parity linux/arm64 + node_modules isolated from the host (which has no repo install).
