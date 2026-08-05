@@ -5,9 +5,9 @@ module.exports = async function (src) {
   const { content, data } = fm(src)
 
   const code =
-    // based on `baseUrl` in `tsconfig.json`
-    `import {withLayout} from 'apps/website/src/components';
-export {getStaticProps} from 'apps/website/src/mdxStaticProps';
+    // MDX files live in src/pages, so these imports are relative to that dir.
+    `import {withLayout} from '../components';
+export {getStaticProps} from '../mdxStaticProps';
 
 export default withLayout(${JSON.stringify(data)})
 

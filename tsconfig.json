@@ -7,18 +7,20 @@
     "forceConsistentCasingInFileNames": true,
     "inlineSources": false,
     "isolatedModules": true,
-    "moduleResolution": "node",
+    "moduleResolution": "bundler",
     "noUnusedLocals": false,
     "noUnusedParameters": false,
     "preserveWatchOutput": true,
     "skipLibCheck": true,
     "noUncheckedIndexedAccess": true,
     "strict": true,
-    "baseUrl": ".",
     "paths": {
-      "@flow/reader/*": ["apps/reader/src/*"],
-      "@flow/internal": ["packages/internal/src/index.ts"],
-      "@flow/epubjs/*": ["packages/epubjs/*"]
+      "@flow/reader/*": ["./apps/reader/src/*"],
+      "@flow/internal": ["./packages/internal/src/index.ts"],
+      "@flow/epubjs/*": ["./packages/epubjs/*"],
+      "react-polymorphic-types": [
+        "./apps/reader/node_modules/react-polymorphic-types/index.d.ts"
+      ]
     }
   },
   "exclude": ["node_modules"]
