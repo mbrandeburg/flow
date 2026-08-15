@@ -34,5 +34,6 @@ export function download(text: string, filename: string, mime = 'text/plain') {
   document.body.appendChild(a)
   a.click()
   document.body.removeChild(a)
-  URL.revokeObjectURL(url)
+  // Defer revocation so the download has a chance to start in all browsers.
+  setTimeout(() => URL.revokeObjectURL(url), 0)
 }
