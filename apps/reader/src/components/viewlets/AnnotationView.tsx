@@ -1,12 +1,12 @@
 import { useBoolean } from '@literal-ui/hooks'
 import React, { Fragment } from 'react'
 import { useMemo } from 'react'
-import { VscCopy } from 'react-icons/vsc'
+import { VscCopy, VscDesktopDownload } from 'react-icons/vsc'
 
 import { Annotation } from '@flow/reader/annotation'
 import { useTranslation } from '@flow/reader/hooks'
 import { reader, useReaderSnapshot } from '@flow/reader/models'
-import { copy, group, keys } from '@flow/reader/utils'
+import { copy, download, group, keys } from '@flow/reader/utils'
 
 import { Row } from '../Row'
 import { PaneViewProps, PaneView, Pane } from '../base'
@@ -55,7 +55,7 @@ const AnnotationPane: React.FC = () => {
     return group(annotations ?? [], (a) => a.spine.index)
   }, [annotations])
 
-  const exportAnnotations = () => {
+  const buildAnnotationsMarkdown = () => {
     // process annotations to be under each section
     // group annotations by title
     const grouped = group(annotations, (a) => a.spine.title)
@@ -71,15 +71,29 @@ const AnnotationPane: React.FC = () => {
       exported[chapter] = annotations
     }
 
-    // Copy to clipboard as markdown
-    const exportedAnnotationsMd = Object.entries(exported)
+    return Object.entries(exported)
       .map(([chapter, annotations]) => {
         return `## ${chapter}\n${annotations
           .map((a) => `- ${a.text} ${a.notes ? `(${a.notes})` : ''}`)
           .join('\n')}`
       })
       .join('\n\n')
-    copy(exportedAnnotationsMd)
+  }
+
+  const downloadAnnotations = () => {
+    const bookName = focusedBookTab?.book.name ?? 'annotations'
+    const filename = `${bookName.replace(/\.epub$/i, '')}-annotations.md`
+    download(buildAnnotationsMarkdown(), filename, 'text/markdown')
+  }
+
+  const exportAnnotations = async () => {
+    // Copy to clipboard as markdown, falling back to a file download when the
+    // clipboard is unavailable or the payload exceeds browser/clipboard limits.
+    try {
+      await copy(buildAnnotationsMarkdown())
+    } catch {
+      downloadAnnotations()
+    }
   }
 
   return (
@@ -94,6 +108,14 @@ const AnnotationPane: React.FC = () => {
                 Icon: VscCopy,
                 handle() {
                   exportAnnotations()
+                },
+              },
+              {
+                id: 'download-all',
+                title: t('download_as_markdown'),
+                Icon: VscDesktopDownload,
+                handle() {
+                  downloadAnnotations()
                 },
               },
             ]

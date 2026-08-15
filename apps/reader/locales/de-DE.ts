@@ -22,6 +22,7 @@ export default {
   'annotation.definitions': 'Definitionen',
   'annotation.annotations': 'Anmerkungen',
   'annotation.copy_as_markdown': 'Als Markdown kopieren',
+  'annotation.download_as_markdown': 'Als Markdown herunterladen',
 
   'image.title': 'Bild',
 

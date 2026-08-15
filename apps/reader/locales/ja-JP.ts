@@ -22,6 +22,7 @@ export default {
   'annotation.definitions': '定義',
   'annotation.annotations': '注釈',
   'annotation.copy_as_markdown': 'Markdownとしてコピー',
+  'annotation.download_as_markdown': 'Markdownとしてダウンロード',
 
   'image.title': '画像',
 
